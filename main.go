@@ -4,8 +4,34 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"golang.org/x/term"
+)
+
+type menuItems struct {
+	parent   string
+	children []string
+}
+
+type menuSelections struct {
+	selectedParent int
+	selectedChild  int
+}
+
+var menu = [...]menuItems{
+	{"1", []string{"a", "b", "c"}},
+	{"2", []string{"d", "e", "f"}},
+	{"3", []string{"g", "h", "i"}},
+}
+
+var (
+	quitKey  = []byte{113, 0, 0, 0}
+	enterKey = []byte{13, 0, 0, 0}
+	upKey    = []byte{27, 91, 65, 0}
+	downKey  = []byte{27, 91, 66, 0}
+	rightKey = []byte{27, 91, 67, 0}
+	leftKey  = []byte{27, 91, 68, 0}
 )
 
 func captureKey(bs *[]byte) {
@@ -19,127 +45,108 @@ func captureKey(bs *[]byte) {
 	os.Stdin.Read(*bs)
 }
 
-type menuItems struct {
-	main string
-	sub  []string
-}
-
-var menu = [...]menuItems{
-	{"1", []string{"a", "b", "c"}},
-	{"2", []string{"d", "e", "f"}},
-	{"3", []string{"g", "h", "i"}},
-}
-
-type menuCoordinates struct {
-	parent int
-	child  int
-}
-
-func printMenu(mc menuCoordinates) {
+func printMenu(ms menuSelections) {
 	redBackground := "\033[41m"
 	reset := "\033[0m"
 	fmt.Println("Use arrows to select items, or press 'q' to quit")
 	for i, v := range menu {
-		if i == mc.parent && mc.child == -1 {
-			fmt.Printf("%s%v%s\n", redBackground, v.main, reset)
+		// Print the parent menu items.
+		if i == ms.selectedParent && ms.selectedChild == -1 {
+			fmt.Printf("%s%v%s\n", redBackground, v.parent, reset)
 		} else {
-			fmt.Printf("%v\n", v.main)
+			fmt.Printf("%v\n", v.parent)
 		}
-
-		if mc.parent == i && mc.child >= 0 {
-			for j, w := range v.sub {
-				if j == mc.child {
-					fmt.Printf("%s%v%s\n", redBackground, w, reset)
+		// Print the children menu items.
+		if i == ms.selectedParent && ms.selectedChild >= 0 {
+			for ii, vv := range v.children {
+				if ii == ms.selectedChild {
+					fmt.Printf("\t%s%v%s\n", redBackground, vv, reset)
 				} else {
-					fmt.Printf("%v\n", w)
+					fmt.Printf("\t%v\n", vv)
 				}
 			}
 		}
 	}
 }
 
-var (
-	quitKey  = []byte{113, 0, 0, 0}
-	enterKey = []byte{13, 0, 0, 0}
-	upKey    = []byte{27, 91, 65, 0}
-	downKey  = []byte{27, 91, 66, 0}
-	rightKey = []byte{27, 91, 67, 0}
-	leftKey  = []byte{27, 91, 68, 0}
-)
-
-func updateMenuCoordinates(bs []byte, mc *menuCoordinates) {
+func updateMenuSelections(bs []byte, ms *menuSelections) {
 	if bytes.Equal(bs, upKey) {
 		// Cursor is "above" the parent list. Do nothing.
-		if mc.parent == -1 {
+		if ms.selectedParent == -1 {
 			return
 		}
 		// Cursor is in the child list, but at the top. Move back to parent list.
-		if mc.child >= 0 {
-			mc.child = (mc.child - 1)
+		if ms.selectedChild >= 0 {
+			ms.selectedChild = (ms.selectedChild - 1)
 			return
 		}
-		// Default. Cursor is somewhere in the middle of the main menu. Move up one item.
-		mc.parent = (mc.parent - 1)
+		// Default. Cursor is somewhere in the middle of the parent menu. Move up one item.
+		ms.selectedParent = (ms.selectedParent - 1)
 	}
 	if bytes.Equal(bs, downKey) {
 		// Cursor is "above" the list. Move down to the first item.
 		// This check should remain at the top, since it guards against index out of rage errors.
-		if mc.parent == -1 {
-			mc.parent = 0
+		if ms.selectedParent == -1 {
+			ms.selectedParent = 0
 			return
 		}
 		// Cursor is at the bottom of the parent list. Do Nothing.
-		if mc.child == -1 && mc.parent == (len(menu)-1) {
+		if ms.selectedChild == -1 && ms.selectedParent == (len(menu)-1) {
 			return
 		}
 		// Cursor is at the bottom of the child list. Do Nothing.
-		if mc.child == (len(menu[mc.parent].sub) - 1) {
+		if ms.selectedChild == (len(menu[ms.selectedParent].children) - 1) {
 			return
 		}
-		// Cursor is located in a sub menu. Move down one item.
-		if mc.child >= 0 {
-			mc.child = (mc.child + 1)
+		// Cursor is located in a children menu. Move down one item.
+		if ms.selectedChild >= 0 {
+			ms.selectedChild = (ms.selectedChild + 1)
 			return
 		}
-		// Default. Cursor is somewhere in the middle of the main menu. Move down one item.
-		mc.parent = (mc.parent + 1)
+		// Default. Cursor is somewhere in the middle of the parent menu. Move down one item.
+		ms.selectedParent = (ms.selectedParent + 1)
 	}
 	if bytes.Equal(bs, rightKey) {
 		// Cursor is "above" the list. Do nothing.
-		if mc.parent == -1 {
+		if ms.selectedParent == -1 {
 			return
 		}
-		// Cursor is already in the sub menu. Do nothing.
-		if mc.child >= 0 {
+		// Cursor is already in the children menu. Do nothing.
+		if ms.selectedChild >= 0 {
 			return
 		}
-		// Default. Cursor is in the main menu. Move to the first item in the sub menu.
-		mc.child = 0
+		// Default. Cursor is in the parent menu. Move to the first item in the children menu.
+		ms.selectedChild = 0
 	}
 	if bytes.Equal(bs, leftKey) {
-		mc.child = -1
+		ms.selectedChild = -1
 	}
 }
 
 func main() {
 	// Byte slice will capture various key press events.
 	bs := make([]byte, 4)
-	var coords = menuCoordinates{-1, -1}
+	var ms = menuSelections{-1, -1}
 	// While loop until user presses 'q' to quit.
 	for !bytes.Equal(bs, quitKey) {
-		updateMenuCoordinates(bs, &coords)
-		printMenu(coords)
+		updateMenuSelections(bs, &ms)
+		printMenu(ms)
 		captureKey(&bs)
 		instructionLines := 1
 		parentLines := len(menu)
 		childLines := 0
-		if coords.child >= 0 {
-			childLines = len(menu[coords.parent].sub)
+		if ms.selectedChild >= 0 {
+			childLines = len(menu[ms.selectedParent].children)
 		}
 		totalLines := parentLines + childLines + instructionLines
 		// Respond to enter key (command selection) without clearing menu
 		if bytes.Equal(bs, enterKey) {
-			fmt.Println("Enter was pressed")
+			cmd := exec.Command("date")
+			cmdOut, err := cmd.Output()
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(string(cmdOut))
 		} else {
 			for i := 0; i < totalLines; i++ {
 				// VT100 escape code to move the cursor up one line
