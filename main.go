@@ -71,39 +71,39 @@ func printMenu(ms menuSelections) {
 
 func updateMenuSelections(bs []byte, ms *menuSelections) {
 	if bytes.Equal(bs, upKey) {
-		// Cursor is "above" the parent list. Do nothing.
+		// Cursor is "above" the parent menu. Do nothing.
 		if ms.selectedParent == -1 {
 			return
 		}
-		// Cursor is in the child list, but at the top. Move back to parent list.
+		// Cursor is at the top of the children menu. Move back to parent menu.
 		if ms.selectedChild >= 0 {
 			ms.selectedChild = (ms.selectedChild - 1)
 			return
 		}
-		// Default. Cursor is somewhere in the middle of the parent menu. Move up one item.
+		// Default. Cursor in the middle of the parent menu. Move up one item.
 		ms.selectedParent = (ms.selectedParent - 1)
 	}
 	if bytes.Equal(bs, downKey) {
-		// Cursor is "above" the list. Move down to the first item.
+		// Cursor is "above" the parent menu. Move down to the first item.
 		// This check should remain at the top, since it guards against index out of rage errors.
 		if ms.selectedParent == -1 {
 			ms.selectedParent = 0
 			return
 		}
-		// Cursor is at the bottom of the parent list. Do Nothing.
+		// Cursor is at the bottom of the parent menu. Do Nothing.
 		if ms.selectedChild == -1 && ms.selectedParent == (len(menu)-1) {
 			return
 		}
-		// Cursor is at the bottom of the child list. Do Nothing.
+		// Cursor is at the bottom of the child menu. Do Nothing.
 		if ms.selectedChild == (len(menu[ms.selectedParent].children) - 1) {
 			return
 		}
-		// Cursor is located in a children menu. Move down one item.
+		// Cursor is in the middle of the children menu. Move down one item.
 		if ms.selectedChild >= 0 {
 			ms.selectedChild = (ms.selectedChild + 1)
 			return
 		}
-		// Default. Cursor is somewhere in the middle of the parent menu. Move down one item.
+		// Default. Cursor is in the middle of the parent menu. Move down one item.
 		ms.selectedParent = (ms.selectedParent + 1)
 	}
 	if bytes.Equal(bs, rightKey) {
@@ -115,19 +115,20 @@ func updateMenuSelections(bs []byte, ms *menuSelections) {
 		if ms.selectedChild >= 0 {
 			return
 		}
-		// Default. Cursor is in the parent menu. Move to the first item in the children menu.
+		// Default. Cursor is in the parent menu. Move to the first item in the corresponding children menu.
 		ms.selectedChild = 0
 	}
 	if bytes.Equal(bs, leftKey) {
+		// Close the children menu and return to the parent menu.
 		ms.selectedChild = -1
 	}
 }
 
 func main() {
-	// Byte slice will capture various key press events.
+	// Capture various key press events in 4-byte slice.
 	bs := make([]byte, 4)
 	var ms = menuSelections{-1, -1}
-	// While loop until user presses 'q' to quit.
+	// Loop until user presses 'q' to quit.
 	for !bytes.Equal(bs, quitKey) {
 		updateMenuSelections(bs, &ms)
 		printMenu(ms)
@@ -139,7 +140,7 @@ func main() {
 			childLines = len(menu[ms.selectedParent].children)
 		}
 		totalLines := parentLines + childLines + instructionLines
-		// Respond to enter key (command selection) without clearing menu
+		// Respond to enter key (command selection) without clearing menu.
 		if bytes.Equal(bs, enterKey) {
 			cmd := exec.Command("date")
 			cmdOut, err := cmd.Output()
@@ -149,10 +150,9 @@ func main() {
 			fmt.Println(string(cmdOut))
 		} else {
 			for i := 0; i < totalLines; i++ {
-				// VT100 escape code to move the cursor up one line
-				// http://www.climagic.org/mirrors/VT100_Escape_Codes.html
+				// Move the cursor up one line (see VT100 escape codes).
 				fmt.Printf("\033[1A")
-				// Clear the line
+				// Clear the line.
 				fmt.Printf("\033[K")
 			}
 		}
