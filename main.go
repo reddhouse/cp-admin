@@ -3,15 +3,22 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
+	"github.com/joho/godotenv"
 	"golang.org/x/term"
 )
 
+type command struct {
+	desc string
+	cmd  string
+}
+
 type menuItems struct {
 	parent   string
-	children []string
+	children []command
 }
 
 type menuSelections struct {
@@ -20,9 +27,15 @@ type menuSelections struct {
 }
 
 var menu = [...]menuItems{
-	{"1", []string{"a", "b", "c"}},
-	{"2", []string{"d", "e", "f"}},
-	{"3", []string{"g", "h", "i"}},
+	{
+		parent: "Misc",
+		children: []command{
+			{
+				desc: "Print Date",
+				cmd:  "date",
+			},
+		},
+	},
 }
 
 var (
@@ -124,7 +137,14 @@ func updateMenuSelections(bs []byte, ms *menuSelections) {
 	}
 }
 
-func main() {
+func loadEnvVariables() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+}
+
+func runSelectedCommands() {
 	// Capture various key press events in 4-byte slice.
 	bs := make([]byte, 4)
 	var ms = menuSelections{-1, -1}
@@ -148,6 +168,7 @@ func main() {
 				panic(err)
 			}
 			fmt.Println(string(cmdOut))
+			printHetznerStuff()
 		} else {
 			for i := 0; i < totalLines; i++ {
 				// Move the cursor up one line (see VT100 escape codes).
@@ -157,6 +178,10 @@ func main() {
 			}
 		}
 	}
+}
 
+func main() {
+	loadEnvVariables()
+	runSelectedCommands()
 	fmt.Println("exiting...")
 }
