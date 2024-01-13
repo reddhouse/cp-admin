@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
+
+	"cp-admin.cooperativeparty.org/hetzner"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/term"
@@ -13,7 +14,8 @@ import (
 
 type command struct {
 	desc string
-	cmd  string
+	cmd  func(args ...string)
+	args []string
 }
 
 type menuItems struct {
@@ -31,8 +33,9 @@ var menu = [...]menuItems{
 		parent: "Misc",
 		children: []command{
 			{
-				desc: "Print Date",
-				cmd:  "date",
+				desc: "Check Server 1",
+				cmd:  hetzner.DoStuff,
+				args: []string{},
 			},
 		},
 	},
@@ -50,6 +53,8 @@ var (
 func captureKey(bs *[]byte) {
 	*bs = make([]byte, 4)
 	fd := int(os.Stdin.Fd())
+	// Use term package to make terminal raw, making characters available to be
+	// read one by one as they are typed, instead of being grouped into lines.
 	oldState, err := term.MakeRaw(fd)
 	if err != nil {
 		panic(err)
@@ -73,9 +78,9 @@ func printMenu(ms menuSelections) {
 		if i == ms.selectedParent && ms.selectedChild >= 0 {
 			for ii, vv := range v.children {
 				if ii == ms.selectedChild {
-					fmt.Printf("\t%s%v%s\n", redBackground, vv, reset)
+					fmt.Printf("\t%s%v%s\n", redBackground, vv.desc, reset)
 				} else {
-					fmt.Printf("\t%v\n", vv)
+					fmt.Printf("\t%v\n", vv.desc)
 				}
 			}
 		}
@@ -161,14 +166,15 @@ func runSelectedCommands() {
 		}
 		totalLines := parentLines + childLines + instructionLines
 		// Respond to enter key (command selection) without clearing menu.
-		if bytes.Equal(bs, enterKey) {
-			cmd := exec.Command("date")
-			cmdOut, err := cmd.Output()
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(string(cmdOut))
-			printHetznerStuff()
+		if bytes.Equal(bs, enterKey) && ms.selectedChild >= 0 {
+			// cmd := exec.Command("date")
+			// cmdOut, err := cmd.Output()
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// fmt.Println(string(cmdOut))
+			selectedCommand := menu[ms.selectedParent].children[ms.selectedChild]
+			selectedCommand.cmd(selectedCommand.args...)
 		} else {
 			for i := 0; i < totalLines; i++ {
 				// Move the cursor up one line (see VT100 escape codes).

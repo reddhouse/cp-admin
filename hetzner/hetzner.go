@@ -1,4 +1,4 @@
-package main
+package hetzner
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 )
 
-func printHetznerStuff() {
+func DoStuff(args ...string) {
 	token := os.Getenv("HETZNER_API_TOKEN")
 	client := hcloud.NewClient(hcloud.WithToken(token))
 

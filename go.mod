@@ -1,4 +1,4 @@
-module cp_admin
+module cp-admin.cooperativeparty.org
 
 go 1.21.5
 

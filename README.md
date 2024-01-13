@@ -1,2 +1,3 @@
 # cp-admin
-Adminstrative dev tools for Cooperative Party apps and infrastructure.
+
+Administrative dev tools for Cooperative Party apps and infrastructure.
