@@ -28,6 +28,8 @@ type menuSelections struct {
 	selectedChild  int
 }
 
+var uTest utils_test
+
 var menu = [...]menuItems{
 	{
 		parent: "Misc",
@@ -35,6 +37,16 @@ var menu = [...]menuItems{
 			{
 				desc: "Check Server 1",
 				cmd:  hetzner.DoStuff,
+				args: []string{},
+			},
+		},
+	},
+	{
+		parent: "Testing",
+		children: []command{
+			{
+				desc: "Signup New User",
+				cmd:  uTest.signupNewUser,
 				args: []string{},
 			},
 		},
@@ -187,6 +199,8 @@ func runSelectedCommands() {
 }
 
 func main() {
+	uTest = utils_test{}
+
 	loadEnvVariables()
 	runSelectedCommands()
 	fmt.Println("exiting...")
