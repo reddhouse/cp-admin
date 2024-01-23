@@ -49,6 +49,11 @@ var menu = [...]menuItems{
 				cmd:  uTest.signupNewUser,
 				args: []string{},
 			},
+			{
+				desc: "Shutdown Server",
+				cmd:  uTest.shutdownServer,
+				args: []string{},
+			},
 		},
 	},
 }
@@ -78,25 +83,27 @@ func captureKey(bs *[]byte) {
 func printMenu(ms menuSelections) {
 	redBackground := "\033[41m"
 	reset := "\033[0m"
-	fmt.Println("Use arrows to select items, or press 'q' to quit")
+	fmt.Println()
+	fmt.Println("---Use arrows or press 'q' to quit---")
 	for i, v := range menu {
 		// Print the parent menu items.
 		if i == ms.selectedParent && ms.selectedChild == -1 {
-			fmt.Printf("%s%v%s\n", redBackground, v.parent, reset)
+			fmt.Printf("%s%s%v%s\n", redBackground, "\u2022", v.parent, reset)
 		} else {
-			fmt.Printf("%v\n", v.parent)
+			fmt.Printf("%s%v\n", "\u2022", v.parent)
 		}
 		// Print the children menu items.
 		if i == ms.selectedParent && ms.selectedChild >= 0 {
 			for ii, vv := range v.children {
 				if ii == ms.selectedChild {
-					fmt.Printf("\t%s%v%s\n", redBackground, vv.desc, reset)
+					fmt.Printf("\t%s%s%v%s\n", redBackground, "\u25E6", vv.desc, reset)
 				} else {
-					fmt.Printf("\t%v\n", vv.desc)
+					fmt.Printf("\t%s%v\n", "\u25E6", vv.desc)
 				}
 			}
 		}
 	}
+	fmt.Println("-------------------------------------")
 }
 
 func updateMenuSelections(bs []byte, ms *menuSelections) {
@@ -170,24 +177,21 @@ func runSelectedCommands() {
 		updateMenuSelections(bs, &ms)
 		printMenu(ms)
 		captureKey(&bs)
-		instructionLines := 1
 		parentLines := len(menu)
 		childLines := 0
+		dividerLines := 3
 		if ms.selectedChild >= 0 {
 			childLines = len(menu[ms.selectedParent].children)
 		}
-		totalLines := parentLines + childLines + instructionLines
+		totalLines := parentLines + childLines + dividerLines
 		// Respond to enter key (command selection) without clearing menu.
 		if bytes.Equal(bs, enterKey) && ms.selectedChild >= 0 {
-			// cmd := exec.Command("date")
-			// cmdOut, err := cmd.Output()
-			// if err != nil {
-			// 	panic(err)
-			// }
-			// fmt.Println(string(cmdOut))
 			selectedCommand := menu[ms.selectedParent].children[ms.selectedChild]
 			selectedCommand.cmd(selectedCommand.args...)
 		} else {
+			// Some other (non-enter) key was pressed.
+			// Clear the space that the current menu is occupying so the next
+			// loop iteration will appear to update/expand the menu "in place".
 			for i := 0; i < totalLines; i++ {
 				// Move the cursor up one line (see VT100 escape codes).
 				fmt.Printf("\033[1A")
