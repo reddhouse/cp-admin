@@ -14,8 +14,7 @@ import (
 
 type command struct {
 	desc string
-	cmd  func(args ...string)
-	args []string
+	cmd  func()
 }
 
 type menuItems struct {
@@ -35,12 +34,10 @@ var menu = [...]menuItems{
 			{
 				desc: "Check Server 1",
 				cmd:  hetzner.DoStuff,
-				args: []string{},
 			},
 			{
 				desc: "Send an Email",
 				cmd:  sendTLSEmail,
-				args: []string{},
 			},
 		},
 	},
@@ -49,13 +46,20 @@ var menu = [...]menuItems{
 		children: []command{
 			{
 				desc: "Signup New User",
-				cmd:  signupNewUser,
-				args: []string{},
+				cmd:  wrapSignup,
 			},
 			{
 				desc: "Shutdown Server",
-				cmd:  shutdownServer,
-				args: []string{},
+				cmd:  wrapShutdown,
+			},
+		},
+	},
+	{
+		parent: "E2E",
+		children: []command{
+			{
+				desc: "Run E2E Locally",
+				cmd:  runEndToEndLocal,
 			},
 		},
 	},
@@ -167,7 +171,7 @@ func updateMenuSelections(bs []byte, ms *menuSelections) {
 func loadEnvVariables() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("error loading .env file")
 	}
 }
 
@@ -190,7 +194,7 @@ func runSelectedCommands() {
 		// Respond to enter key (command selection) without clearing menu.
 		if bytes.Equal(bs, enterKey) && ms.selectedChild >= 0 {
 			selectedCommand := menu[ms.selectedParent].children[ms.selectedChild]
-			selectedCommand.cmd(selectedCommand.args...)
+			selectedCommand.cmd()
 		} else {
 			// Some other (non-enter) key was pressed.
 			// Clear the space that the current menu is occupying so the next
@@ -208,5 +212,5 @@ func runSelectedCommands() {
 func main() {
 	loadEnvVariables()
 	runSelectedCommands()
-	fmt.Println("exiting...")
+	fmt.Println("[admin] exiting...")
 }

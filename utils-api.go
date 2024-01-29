@@ -21,8 +21,8 @@ func generateRandomEmailAddress() string {
 }
 
 // Test /user/signup/ endpoint.
-func signupNewUser(args ...string) {
-	url := "http://localhost:8000/user/signup/"
+func signup(port string) {
+	url := "http://localhost:" + port + "/user/signup/"
 	randomEmailAddress := generateRandomEmailAddress()
 	jsonData := []byte(`{"email":"` + randomEmailAddress + `"}`)
 	// Send POST request using the default http client.
@@ -46,14 +46,18 @@ func signupNewUser(args ...string) {
 	}{}
 	json.Unmarshal(body, &result)
 
-	fmt.Println("Response Status:", resp.Status)
-	fmt.Println("Response Body:", string(body))
-	fmt.Printf("Email address of %v now has UserId: %v\n", randomEmailAddress, result.Id)
+	fmt.Println("-> Response Status:", resp.Status)
+	fmt.Println("-> Response Body:", string(body))
+	fmt.Printf("-> Email address of %v now has UserId: %v\n", randomEmailAddress, result.Id)
+}
+
+func wrapSignup() {
+	signup("8000")
 }
 
 // Test /admin/shutdown/ endpoint.
-func shutdownServer(args ...string) {
-	url := "http://localhost:8000/admin/shutdown/"
+func shutdown(port string) {
+	url := "http://localhost:" + port + "/admin/shutdown/"
 	jsonData := []byte(``)
 	// Send POST request using the default http client.
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
@@ -69,6 +73,10 @@ func shutdownServer(args ...string) {
 		return
 	}
 
-	fmt.Println("Response Status:", resp.Status)
-	fmt.Println(string(body))
+	fmt.Println("-> Response Status:", resp.Status)
+	fmt.Println("-> Response Body:", string(body))
+}
+
+func wrapShutdown() {
+	shutdown("8000")
 }

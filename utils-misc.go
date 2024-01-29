@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func sendEmail(args ...string) {
+func sendEmail() {
 	emailSmtpServer := os.Getenv("EMAIL_SMTP_SERVER")
 	emailPrimaryUser := os.Getenv("EMAIL_PRIMARY_USER")
 	emailPassword := os.Getenv("EMAIL_PASSWORD")
@@ -37,7 +37,7 @@ func sendEmail(args ...string) {
 	fmt.Printf("Email sent to %v\n", emailTestRecipient)
 }
 
-func sendTLSEmail(args ...string) {
+func sendTLSEmail() {
 	emailSmtpServer := os.Getenv("EMAIL_SMTP_SERVER")
 	emailPrimaryUser := os.Getenv("EMAIL_PRIMARY_USER")
 	emailPassword := os.Getenv("EMAIL_PASSWORD")
