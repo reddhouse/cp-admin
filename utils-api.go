@@ -42,13 +42,13 @@ func signup(port string) {
 	}
 	// Unmarshal the response into an anonymous struct.
 	result := struct {
-		Id int `json:"id"`
+		UserId string `json:"userId"`
 	}{}
 	json.Unmarshal(body, &result)
 
 	fmt.Println("-> Response Status:", resp.Status)
 	fmt.Println("-> Response Body:", string(body))
-	fmt.Printf("-> Email address of %v now has UserId: %v\n", randomEmailAddress, result.Id)
+	fmt.Printf("-> Corresponding email address: %v\n", randomEmailAddress)
 }
 
 func wrapSignup() {
