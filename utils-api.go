@@ -21,7 +21,7 @@ func generateRandomEmailAddress() string {
 }
 
 // Test /user/signup/ endpoint.
-func signup(port string) {
+func signup() {
 	url := "http://localhost:" + port + "/user/signup/"
 	randomEmailAddress := generateRandomEmailAddress()
 	jsonData := []byte(`{"email":"` + randomEmailAddress + `"}`)
@@ -51,12 +51,8 @@ func signup(port string) {
 	fmt.Printf("-> Corresponding email address: %v\n", randomEmailAddress)
 }
 
-func wrapSignup() {
-	signup("8000")
-}
-
 // Test /admin/shutdown/ endpoint.
-func shutdown(port string) {
+func shutdown() {
 	url := "http://localhost:" + port + "/admin/shutdown/"
 	jsonData := []byte(``)
 	// Send POST request using the default http client.
@@ -75,8 +71,4 @@ func shutdown(port string) {
 
 	fmt.Println("-> Response Status:", resp.Status)
 	fmt.Println("-> Response Body:", string(body))
-}
-
-func wrapShutdown() {
-	shutdown("8000")
 }

@@ -12,7 +12,6 @@ import (
 
 func runEndToEndLocal() {
 	dir := "temp-e2e"
-	e2ePort := "8001"
 
 	// Check if the temp directory exists.
 	if _, err := os.Stat(dir); !os.IsNotExist(err) {
@@ -51,17 +50,20 @@ func runEndToEndLocal() {
 	goGetCmd.Stdout = os.Stdout
 	goGetCmd.Stderr = os.Stderr
 
+	// Run command and wait for it to complete.
 	err = goGetCmd.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Setup command to start the cp-api server in a subprocess.
 	subDir := "cp-api"
-	runCmd := exec.Command("/Users/jmt/sdk/go1.22rc1/bin/go", "run", ".", fmt.Sprintf("-port=%s", e2ePort))
+	runCmd := exec.Command("/Users/jmt/sdk/go1.22rc1/bin/go", "run", ".", "-test")
 	runCmd.Dir = fmt.Sprintf("%s/%s", dir, subDir)
 	runCmd.Stdout = os.Stdout
 	runCmd.Stderr = os.Stderr
 
+	// Start server but don't wait in order to proceed with testing.
 	err = runCmd.Start()
 	if err != nil {
 		log.Fatal(err)
@@ -71,7 +73,7 @@ func runEndToEndLocal() {
 
 	// Check if the server is up by trying to establish a connection to it.
 	for i := 0; i < 10; i++ {
-		conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%s", e2ePort))
+		conn, err := net.Dial("tcp", "localhost:8001")
 		if err == nil {
 			conn.Close()
 			break
@@ -80,10 +82,17 @@ func runEndToEndLocal() {
 		time.Sleep(1 * time.Second)
 	}
 
-	// Proceed with testing api.
-	signup(e2ePort)
-	shutdown(e2ePort)
+	// Set global port variable.
+	port = "8001"
 
+	// Proceed with testing endpoints.
+	signup()
+	shutdown()
+
+	// Reset global port variable.
+	port = "8000"
+
+	// Wait for previously started command to exit.
 	err = runCmd.Wait()
 	if err != nil {
 		log.Fatal(err)

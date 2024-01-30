@@ -27,6 +27,10 @@ type menuSelections struct {
 	selectedChild  int
 }
 
+// The cp-api server typically exposes port 8000, but this program can run the
+// cp-api server in a subprocess, during which port 8001 is specified.
+var port string = "8000"
+
 var menu = [...]menuItems{
 	{
 		parent: "Misc",
@@ -46,11 +50,11 @@ var menu = [...]menuItems{
 		children: []command{
 			{
 				desc: "Signup New User",
-				cmd:  wrapSignup,
+				cmd:  signup,
 			},
 			{
 				desc: "Shutdown Server",
-				cmd:  wrapShutdown,
+				cmd:  shutdown,
 			},
 		},
 	},
