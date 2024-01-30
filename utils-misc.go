@@ -58,30 +58,31 @@ func sendTLSEmail() {
 		"From:  " + emailSenderName + " <" + emailSenderAddress + ">\r\n" +
 		"Hello. How's the weather?\r\n")
 
-	// Connect to the server without sending the STARTTLS command.
+	// Establish plain text connection to SMTP server.
 	c, err := smtp.Dial(fmt.Sprintf("%s:587", emailSmtpServer))
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Upgrade to a secure connection using TLS.
 	config := &tls.Config{ServerName: emailSmtpServer}
 	if err = c.StartTLS(config); err != nil {
 		log.Fatal(err)
 	}
-
-	// Authenticate and send the email.
+	// Authenticate.
 	if err = c.Auth(auth); err != nil {
 		log.Fatal(err)
 	}
+	// Specify the sender.
 	if err = c.Mail(emailSenderAddress); err != nil {
 		log.Fatal(err)
 	}
+	// Specify the recipients.
 	for _, addr := range to {
 		if err = c.Rcpt(addr); err != nil {
 			log.Fatal(err)
 		}
 	}
+	// Get a writer from the server. Write message, and close.
 	w, err := c.Data()
 	if err != nil {
 		log.Fatal(err)
