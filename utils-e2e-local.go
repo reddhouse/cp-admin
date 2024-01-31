@@ -50,7 +50,7 @@ func prepareDirectory(dir string) error {
 	// Create a new temp directory.
 	err := os.Mkdir(dir, 0755)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[error-admin] creating temp directory: %v", err)
 	}
 	log.Printf("New directory created: %v", dir)
 
@@ -73,7 +73,7 @@ func runEndToEndLocal() {
 	}
 
 	// Git clone API into the temp directory.
-	goGetCmd := exec.Command("git", "clone", "https://github.com/reddhouse/cp-api")
+	goGetCmd := exec.Command("git", "clone", "-q", "https://github.com/reddhouse/cp-api")
 	goGetCmd.Dir = dir
 	goGetCmd.Stdout = os.Stdout
 	goGetCmd.Stderr = os.Stderr
@@ -81,7 +81,7 @@ func runEndToEndLocal() {
 	// Run command and wait for it to complete.
 	err = goGetCmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[error-admin] running git clone command (silently): %v", err)
 	}
 
 	// Setup command to start the cp-api server in a subprocess.
@@ -94,7 +94,7 @@ func runEndToEndLocal() {
 	// Start server but don't wait in order to proceed with testing.
 	err = runCmd.Start()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[error-admin] starting an exec.Command: %v", err)
 	}
 
 	log.Printf("Subprocess exec.Command has PID: %d", runCmd.Process.Pid)
@@ -116,6 +116,6 @@ func runEndToEndLocal() {
 	// Wait for previously started command to exit.
 	err = runCmd.Wait()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[error-admin] waiting for exec.Command to exit: %v", err)
 	}
 }
