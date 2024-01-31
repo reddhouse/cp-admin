@@ -2,7 +2,7 @@ package hetzner
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
@@ -14,12 +14,12 @@ func DoStuff() {
 
 	server, _, err := client.Server.GetByID(context.Background(), 1)
 	if err != nil {
-		fmt.Printf("error retrieving server: %s\n", err)
+		log.Fatalf("[error-admin] retrieving server: %s", err)
 		return
 	}
 	if server != nil {
-		fmt.Printf("Server 1 is called %q\n", server.Name)
+		log.Printf("Server 1 is called: %q", server.Name)
 	} else {
-		fmt.Printf("Server 1 not found\n")
+		log.Printf("Server 1 not found")
 	}
 }

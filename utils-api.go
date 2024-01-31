@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -28,7 +29,7 @@ func signup() {
 	// Send POST request using the default http client.
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		fmt.Printf("error reading response: %v\n", err)
+		log.Fatalf("[error-admin] reading response: %v", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -37,7 +38,7 @@ func signup() {
 	// but, the cp-api rarely generates large responses.
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("error reading body: %v\n", err)
+		log.Fatalf("[error-admin] reading body: %v", err)
 		return
 	}
 	// Unmarshal the response into an anonymous struct.
@@ -58,14 +59,14 @@ func shutdown() {
 	// Send POST request using the default http client.
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		fmt.Printf("error reading response: %v\n", err)
+		log.Fatalf("[error-admin] sending post request: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 	// Read response body into memory so we can print it.
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("error reading body: %v\n", err)
+		log.Fatalf("[error-admin] reading response body: %v", err)
 		return
 	}
 

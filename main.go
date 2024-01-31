@@ -167,7 +167,7 @@ func updateMenuSelections(bs []byte, ms *menuSelections) {
 func loadEnvVariables() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("error loading .env file")
+		log.Fatal("[error-admin] loading .env file")
 	}
 }
 
@@ -206,7 +206,8 @@ func runSelectedCommands() {
 }
 
 func main() {
+	log.SetPrefix("[cp-admin] ")
 	loadEnvVariables()
 	runSelectedCommands()
-	fmt.Println("[admin] exiting...")
+	log.Printf("exiting...")
 }
