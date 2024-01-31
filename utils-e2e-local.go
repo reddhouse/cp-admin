@@ -10,12 +10,22 @@ import (
 	"time"
 )
 
-func runEndToEndLocal() {
-	dir := "temp-e2e"
+// Returns error if the API server is already running.
+func apiServerOffline() error {
+	conn, err := net.Dial("tcp", "localhost:8000")
+	if err == nil {
+		conn.Close()
+		return fmt.Errorf("api server is already running")
+	}
+	return nil
+}
 
+// Creates temporary directory for the end-to-end test. Prompts user to delete
+// if the directory already exists.
+func prepareDirectory(dir string) error {
 	// Check if the temp directory exists.
 	if _, err := os.Stat(dir); !os.IsNotExist(err) {
-		// Prompt the user
+		// Prompt the user.
 		fmt.Print("[admin] Directory already exists. Do you want to delete it? (y/n): ")
 		reader := bufio.NewReader(os.Stdin)
 		// Reads until the first occurrence of newline delimiter.
@@ -32,8 +42,8 @@ func runEndToEndLocal() {
 			}
 			fmt.Println("[admin] Directory deleted.")
 		} else {
-			// If no, exit.
-			return
+			// If no, return error.
+			return fmt.Errorf("user declined to delete existing directory")
 		}
 	}
 
@@ -43,6 +53,26 @@ func runEndToEndLocal() {
 		log.Fatal(err)
 	}
 	fmt.Printf("[admin] New %v directory created.\n", dir)
+
+	return nil
+}
+
+func runEndToEndLocal() {
+	// The API server will be started in a subprocess below. If it is already
+	// running in another process, abort this test.
+	err := apiServerOffline()
+	if err != nil {
+		fmt.Printf("error confirming server is offline: %v\n", err)
+		return
+	}
+
+	// Prepare a temp directory for the test.
+	dir := "temp-e2e"
+	err = prepareDirectory(dir)
+	if err != nil {
+		fmt.Printf("error preparing directory: %v", err)
+		return
+	}
 
 	// Git clone API into the temp directory.
 	goGetCmd := exec.Command("git", "clone", "https://github.com/reddhouse/cp-api")
@@ -71,11 +101,10 @@ func runEndToEndLocal() {
 
 	fmt.Printf("[admin] Subprocess exec.Command (cp-admin) has PID: %d\n", runCmd.Process.Pid)
 
-	// Check if the server is up by trying to establish a connection to it.
+	// Delay a bit while server starts.
 	for i := 0; i < 10; i++ {
-		conn, err := net.Dial("tcp", "localhost:8000")
-		if err == nil {
-			conn.Close()
+		err := apiServerOffline()
+		if err != nil {
 			break
 		}
 		// If the connection failed, wait for 1 second before trying again.
