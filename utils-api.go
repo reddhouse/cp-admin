@@ -22,7 +22,7 @@ func generateRandomEmailAddress() string {
 
 // Test /user/signup/ endpoint.
 func signup() {
-	url := "http://localhost:" + port + "/user/signup/"
+	url := "http://localhost:8000/user/signup/"
 	randomEmailAddress := generateRandomEmailAddress()
 	jsonData := []byte(`{"email":"` + randomEmailAddress + `"}`)
 	// Send POST request using the default http client.
@@ -53,7 +53,7 @@ func signup() {
 
 // Test /admin/shutdown/ endpoint.
 func shutdown() {
-	url := "http://localhost:" + port + "/admin/shutdown/"
+	url := "http://localhost:8000/admin/shutdown/"
 	jsonData := []byte(``)
 	// Send POST request using the default http client.
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))

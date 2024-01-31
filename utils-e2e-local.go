@@ -58,7 +58,7 @@ func runEndToEndLocal() {
 
 	// Setup command to start the cp-api server in a subprocess.
 	subDir := "cp-api"
-	runCmd := exec.Command("/Users/jmt/sdk/go1.22rc1/bin/go", "run", ".", "-test")
+	runCmd := exec.Command("/Users/jmt/sdk/go1.22rc1/bin/go", "run", ".", "-env=dev")
 	runCmd.Dir = fmt.Sprintf("%s/%s", dir, subDir)
 	runCmd.Stdout = os.Stdout
 	runCmd.Stderr = os.Stderr
@@ -73,7 +73,7 @@ func runEndToEndLocal() {
 
 	// Check if the server is up by trying to establish a connection to it.
 	for i := 0; i < 10; i++ {
-		conn, err := net.Dial("tcp", "localhost:8001")
+		conn, err := net.Dial("tcp", "localhost:8000")
 		if err == nil {
 			conn.Close()
 			break
@@ -82,15 +82,9 @@ func runEndToEndLocal() {
 		time.Sleep(1 * time.Second)
 	}
 
-	// Set global port variable.
-	port = "8001"
-
 	// Proceed with testing endpoints.
 	signup()
 	shutdown()
-
-	// Reset global port variable.
-	port = "8000"
 
 	// Wait for previously started command to exit.
 	err = runCmd.Wait()
