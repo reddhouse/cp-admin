@@ -39,10 +39,6 @@ var menu = [...]menuItems{
 				desc: "Check Server 1",
 				cmd:  hetzner.DoStuff,
 			},
-			{
-				desc: "Send an Email",
-				cmd:  sendTLSEmail,
-			},
 		},
 	},
 	{
