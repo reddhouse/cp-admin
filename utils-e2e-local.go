@@ -62,7 +62,8 @@ func runEndToEndLocal() {
 	// running in another process, abort this test.
 	err := apiServerOffline()
 	if err != nil {
-		log.Fatalf("[error-admin] confirming server is offline: %v", err)
+		log.Printf("[error-admin] confirming server is offline: %v", err)
+		return
 	}
 
 	// Prepare a temp directory for the test.

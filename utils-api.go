@@ -49,7 +49,18 @@ func signup() {
 
 	fmt.Println("-> Response Status:", resp.Status)
 	fmt.Println("-> Response Body:", string(body))
-	fmt.Printf("-> Corresponding email address: %v\n", randomEmailAddress)
+}
+
+func logUserBucket() {
+	url := "http://localhost:8000/admin/log-bucket/USER"
+	// Send GET request using the default http client.
+	resp, err := http.Post(url, "", nil)
+	if err != nil {
+		log.Fatalf("[error-admin] reading response: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+	fmt.Println("-> Response Status:", resp.Status)
 }
 
 // Test /admin/shutdown/ endpoint.

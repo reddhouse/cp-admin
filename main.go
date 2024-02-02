@@ -45,6 +45,10 @@ var menu = [...]menuItems{
 				cmd:  signup,
 			},
 			{
+				desc: "Log USER Bucket",
+				cmd:  logUserBucket,
+			},
+			{
 				desc: "Shutdown Server",
 				cmd:  shutdown,
 			},
