@@ -51,9 +51,19 @@ func signup() {
 	fmt.Println("-> Response Body:", string(body))
 }
 
-func logUserBucket() {
-	url := "http://localhost:8000/admin/log-bucket/USER"
-	// Send GET request using the default http client.
+func logUserEmailBucket() {
+	url := "http://localhost:8000/admin/log-bucket/USER_EMAIL"
+	resp, err := http.Post(url, "", nil)
+	if err != nil {
+		log.Fatalf("[error-admin] reading response: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+	fmt.Println("-> Response Status:", resp.Status)
+}
+
+func logUserAuthBucket() {
+	url := "http://localhost:8000/admin/log-bucket/USER_AUTH"
 	resp, err := http.Post(url, "", nil)
 	if err != nil {
 		log.Fatalf("[error-admin] reading response: %v", err)

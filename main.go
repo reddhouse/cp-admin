@@ -45,8 +45,12 @@ var menu = [...]menuItems{
 				cmd:  signup,
 			},
 			{
-				desc: "Log USER Bucket",
-				cmd:  logUserBucket,
+				desc: "Log USER_EMAIL Bucket",
+				cmd:  logUserEmailBucket,
+			},
+			{
+				desc: "Log USER_AUTH Bucket",
+				cmd:  logUserAuthBucket,
 			},
 			{
 				desc: "Shutdown Server",
