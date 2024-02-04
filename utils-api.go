@@ -51,6 +51,37 @@ func signup() {
 	fmt.Println("-> Response Body:", string(body))
 }
 
+func loginCode() {
+	url := "http://localhost:8000/user/login-code/"
+	userId := "01HNTQS75CSN5KZMWYF1PWYBH1"
+	code := 930203
+	jsonData := []byte(fmt.Sprintf(`{"userId":"%s","code":%d}`, userId, code))
+	// Send POST request using the default http client.
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Fatalf("[error-admin] reading response: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+	// Read the entire response body into memory so we can print it.
+	// Less efficient than json.NewDecoder(resp.Body).Decode(&mystruct)
+	// but, the cp-api rarely generates large responses.
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("[error-admin] reading body: %v", err)
+		return
+	}
+	// Unmarshal the response into an anonymous struct.
+	result := struct {
+		Token             string `json:"userId"`
+		RemainingAttempts int    `json:"remainingAttempts"`
+	}{}
+	json.Unmarshal(body, &result)
+
+	fmt.Println("-> Response Status:", resp.Status)
+	fmt.Println("-> Response Body:", string(body))
+}
+
 func logUserEmailBucket() {
 	url := "http://localhost:8000/admin/log-bucket/USER_EMAIL"
 	resp, err := http.Post(url, "", nil)
