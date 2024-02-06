@@ -53,6 +53,10 @@ var menu = [...]menuItems{
 				cmd:  loginCode,
 			},
 			{
+				desc: "Logout",
+				cmd:  logout,
+			},
+			{
 				desc: "Log USER_EMAIL Bucket",
 				cmd:  logUserEmailBucket,
 			},
