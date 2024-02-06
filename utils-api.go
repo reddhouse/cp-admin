@@ -25,6 +25,7 @@ func generateRandomEmailAddress() string {
 func signup() {
 	url := "http://localhost:8000/user/signup/"
 	randomEmailAddress := generateRandomEmailAddress()
+	// randomEmailAddress := "foobar@email.com"
 	jsonData := []byte(`{"email":"` + randomEmailAddress + `"}`)
 	// Send POST request using the default http client.
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
@@ -51,10 +52,45 @@ func signup() {
 	fmt.Println("-> Response Body:", string(body))
 }
 
+func login() {
+	url := "http://localhost:8000/user/login/"
+	email := "foobar@email.com"
+	jsonData := []byte(fmt.Sprintf(`{"email":"%s"}`, email))
+	// Send POST request using the default http client.
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Fatalf("[error-admin] reading response: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+	// Read the entire response body into memory.
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("[error-admin] reading body: %v", err)
+		return
+	}
+	// Check the HTTP status code.
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		fmt.Printf("[error-admin] server returned status: %v", resp.Status)
+		return
+	}
+	// Unmarshal the response into an anonymous struct.
+	responseBody := struct {
+		UserId string `json:"userId"`
+	}{}
+	err = json.Unmarshal(body, &responseBody)
+	if err != nil {
+		log.Fatalf("[error-admin] unmarshaling response: %v\n", err)
+		return
+	}
+	fmt.Println("-> Response Status:", resp.Status)
+	fmt.Printf("-> Unmarshaled Response: %+v\n", responseBody)
+}
+
 func loginCode() {
 	url := "http://localhost:8000/user/login-code/"
-	userId := "01HNTQS75CSN5KZMWYF1PWYBH1"
-	code := 930203
+	userId := "01HP0278APCH0AJC73Q6A3A68M"
+	code := 499248
 	jsonData := []byte(fmt.Sprintf(`{"userId":"%s","code":%d}`, userId, code))
 	// Send POST request using the default http client.
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
@@ -71,19 +107,27 @@ func loginCode() {
 		log.Fatalf("[error-admin] reading body: %v", err)
 		return
 	}
+	// Check the HTTP status code.
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		fmt.Printf("[error-admin] server returned status: %v\n", resp.Status)
+		return
+	}
 	// Unmarshal the response into an anonymous struct.
-	result := struct {
-		Token             string `json:"userId"`
+	responseBody := struct {
+		Token             string `json:"token"`
 		RemainingAttempts int    `json:"remainingAttempts"`
 	}{}
-	json.Unmarshal(body, &result)
-
+	err = json.Unmarshal(body, &responseBody)
+	if err != nil {
+		log.Fatalf("[error-admin] unmarshaling response: %v", err)
+		return
+	}
 	fmt.Println("-> Response Status:", resp.Status)
-	fmt.Println("-> Response Body:", string(body))
+	fmt.Printf("-> Unmarshaled Response: %+v\n", responseBody)
 }
 
 func logUserEmailBucket() {
-	url := "http://localhost:8000/admin/log-bucket/USER_EMAIL"
+	url := "http://localhost:8000/admin/log-bucket-custom-key/USER_EMAIL"
 	resp, err := http.Post(url, "", nil)
 	if err != nil {
 		log.Fatalf("[error-admin] reading response: %v", err)

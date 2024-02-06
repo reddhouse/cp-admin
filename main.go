@@ -45,6 +45,10 @@ var menu = [...]menuItems{
 				cmd:  signup,
 			},
 			{
+				desc: "Login",
+				cmd:  login,
+			},
+			{
 				desc: "Login Code",
 				cmd:  loginCode,
 			},
