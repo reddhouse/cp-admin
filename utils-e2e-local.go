@@ -40,7 +40,7 @@ func prepareDirectory(dir string) error {
 			if err != nil {
 				log.Fatalf("[error-admin] deleting existing directory: %v", err)
 			}
-			log.Printf("Directory deleted.")
+			log.Printf("Directory deleted.\n")
 		} else {
 			// If no, return error.
 			return fmt.Errorf("user declined to delete existing directory")
@@ -52,7 +52,7 @@ func prepareDirectory(dir string) error {
 	if err != nil {
 		log.Fatalf("[error-admin] creating temp directory: %v", err)
 	}
-	log.Printf("New directory created: %v", dir)
+	log.Printf("New directory created: %v\n", dir)
 
 	return nil
 }
@@ -62,7 +62,7 @@ func runEndToEndLocal() {
 	// running in another process, abort this test.
 	err := apiServerOffline()
 	if err != nil {
-		log.Printf("[error-admin] confirming server is offline: %v", err)
+		log.Printf("[error-admin] confirming server is offline: %v\n", err)
 		return
 	}
 
@@ -98,7 +98,7 @@ func runEndToEndLocal() {
 		log.Fatalf("[error-admin] starting an exec.Command: %v", err)
 	}
 
-	log.Printf("Subprocess exec.Command has PID: %d", runCmd.Process.Pid)
+	log.Printf("Subprocess exec.Command has PID: %d\n", runCmd.Process.Pid)
 
 	// Delay a bit while server starts.
 	for i := 0; i < 10; i++ {
@@ -111,7 +111,7 @@ func runEndToEndLocal() {
 	}
 
 	// Proceed with testing endpoints.
-	signup()
+	signup(generateRandomEmailAddress())
 	shutdown()
 
 	// Wait for previously started command to exit.

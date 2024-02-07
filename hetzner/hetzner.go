@@ -18,8 +18,8 @@ func DoStuff() {
 		return
 	}
 	if server != nil {
-		log.Printf("Server 1 is called: %q", server.Name)
+		log.Printf("Server 1 is called: %q\n", server.Name)
 	} else {
-		log.Printf("Server 1 not found")
+		log.Printf("Server 1 not found\n")
 	}
 }

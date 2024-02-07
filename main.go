@@ -42,15 +42,15 @@ var menu = [...]menuItems{
 		children: []command{
 			{
 				desc: "Signup New User",
-				cmd:  signup,
+				cmd:  wrappedSignup,
 			},
 			{
 				desc: "Login",
-				cmd:  login,
+				cmd:  wrappedLogin,
 			},
 			{
 				desc: "Login Code",
-				cmd:  loginCode,
+				cmd:  wrappedLoginCode,
 			},
 			{
 				desc: "Logout",
@@ -229,5 +229,5 @@ func main() {
 	log.SetPrefix("[cp-admin] ")
 	loadEnvVariables()
 	runSelectedCommands()
-	log.Printf("exiting...")
+	log.Printf("exiting...\n")
 }
