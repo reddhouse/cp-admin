@@ -12,21 +12,32 @@ import (
 	"time"
 )
 
-type emailBypass struct {
-	bypassCode int
+type authGroup struct {
+	LoginCode     int       `json:"loginCode,omitempty"`
+	LoginAttempts int       `json:"loginAttempts"`
+	LogoutTs      time.Time `json:"logoutTs"`
 }
 
 var str = "a ability able about above accept according account across act action activity actually add address administration admit adult affect after again against age agency agent ago agree agreement ahead air all allow almost alone along already also although always American among amount analysis and animal another answer any anyone anything appear apply approach area argue arm around arrive art article artist as ask assume at attention attorney audience author authority available avoid away back bad bag ball bank bar base be beat beautiful because become bed before begin behavior behind believe benefit best better between beyond big bill billion bit black blood blue board body book born both box boy break bring brother budget build building business but buy by call camera campaign can cancer candidate capital car card care career carry case catch cause cell center central century certain certainly chair challenge chance change character charge check child choice choose church citizen city civil claim class clear clearly close coach cold collection college color come commercial common community company compare computer concern condition conference Congress consider consumer contain continue control cost could country couple course court cover create crime cultural culture cup current customer cut dark data daughter day dead deal debate decade decide decision deep defense degree democratic describe design despite detail determine develop development difference different difficult dinner direction director discover discuss discussion disease do doctor dog door down draw dream drive drop drug during each early east easy eat economic economy edge education effect effort eight either election else employee end energy enjoy enough enter entire environment environmental especially establish even evening event ever every everybody everyone everything evidence exactly example executive exist expect experience expert explain eye face fact factor fail fall family far fast father fear federal feel feeling few field fight figure fill film final finally financial find fine finger finish fire firm first fish five floor fly focus follow food foot for force foreign forget form former forward four free friend from front full fund future game garden gas general generation get girl give glass go goal good government great green ground group grow growth guess gun guy hair half hand hang happen happy hard have he head health hear heart heat heavy help her here herself high him himself his history hit hold home hope hospital hot hotel hour house how however huge human hundred husband idea identify if image imagine impact important improve in include including increase indeed indicate individual industry information inside instead institution interest interesting international interview into investment involve issue it item its itself job join just keep key kid kind kitchen know knowledge land language large last late later laugh law lawyer lay lead leader learn least leave left leg legal less let letter level lie life light like likely line list listen little live local long look lose loss lot love low machine magazine main maintain major majority make man manage management manager many market marriage material matter may maybe mean measure media medical meet meeting member memory mention message method middle might military million mind minute miss mission model modern moment money month more morning most mother mouth move movement movie much music must my myself name nation national natural nature near nearly necessary need network never new news newspaper next nice night no none nor north not note nothing notice now number occur of off offer office officer official often oh oil ok old on once one only onto open operation opportunity option or order organization other others our out outside over own owner page pain painting paper parent part participant particular particularly partner party pass past patient pattern pay peace people per perform performance perhaps period person personal phone physical pick picture piece place plan plant play player PM point police policy political politics poor popular population position positive possible power practice prepare present president pressure pretty prevent price private probably problem process produce product production professional professor program project property protect prove provide public pull purpose push put quality question quickly quite race radio raise range rate rather reach read ready real reality realize really reason receive recent recently recognize record red reduce reflect region relate relationship religious remain remember remove report represent require research resource respond response responsibility rest result return reveal rich right rise risk road rock role room rule run safe same save say scene school science scientist score sea season seat second section security see seek seem sell send senior sense series serious serve service set seven several shake share she shoot short shot should shoulder show side sign significant similar simple simply since sing single sister sit site situation six size skill skin small smile so social society soldier some somebody someone something sometimes son song soon sort sound source south southern space speak special specific speech spend sport spring staff stage stand standard star start state statement station stay step still stock stop store story strategy street strong structure student study stuff style subject success successful such suddenly suffer suggest summer support sure surface system table take talk task tax teach teacher team technology television tell ten tend term test than thank that the their them themselves then theory there these they thing think third this those though thought thousand threat three through throughout throw thus time to today together tonight too top total tough toward town trade traditional training travel treat treatment tree trial trip trouble true truth try turn TV two type under understand unit until up upon us use usually value various very victim view violence visit voice vote wait walk wall want war watch water way we weapon wear week weight well west western what whatever when where whether which while white who whole whom whose why wide wife will win wind window wish with within without woman wonder word work worker world worry would write writer wrong yard yeah year yes yet you young your yourself"
 var words = strings.Fields(str)
 
-// Reset testEmailAddress to empty string if a random email is preferred.
+// Signup a user with a specific email address by hard-coding testEmail below.
+// Otherwise, set to an empty string, and it will be set in-memory by other
+// cp-admin functions.
 var testEmail = ""
 
-// var testUserId = ""
-var testUserId = "01HP2HA5A0JJ0DWP191W5BVX8X"
+// Authenticate a specific user by hard-coding testUserId below.
+// Otherwise, set to an empty string and it will be set in-memory by other
+// cp-admin functions.
+var testUserId = ""
 
-// var testCode = 0
-var testCode = 705385
+// Manually test an INCORRECT login code by hard-coding testLoginCode below. If
+// set to 0, the login code will be retrieved from the server.
+var testLoginCode = 0
+
+// TODO: Remove the above variables and related functionality once things are
+// covered in E2E tests.
+
 var testToken string
 
 func generateRandomEmailAddress() string {
@@ -119,11 +130,41 @@ func login(email string) string {
 
 func wrappedLogin() {
 	if testEmail == "" {
-		fmt.Println("[error-admin] No hardcoded test email. Add code or signup a new user first.")
+		fmt.Println("[error-admin] No hardcoded test email. Add email or signup a new user first.")
 		return
 	}
-	testUserId := login(testEmail)
+	testUserId = login(testEmail)
 	log.Printf("[cp-admin] Email: %s, UserId: %s\n", testEmail, testUserId)
+}
+
+// Gets a loginCode for a given userId by posting a request to a restricted
+// endpoint called bypass-email. Normally a code is emailed to users.
+func getLoginCode(userId string) int {
+	var authGrpInst authGroup
+	var url = fmt.Sprintf("http://localhost:8000/admin/bypass-email/%s", testUserId)
+
+	// Send GET request using the default http client.
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("[error-admin] getting request: %v", err)
+	}
+	defer resp.Body.Close()
+	// Read the entire response body into memory.
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("[error-admin] reading response: %v", err)
+	}
+	// Check the HTTP status code.
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("-> Error:", string(body))
+		log.Fatalf("[error-admin] received non-OK response: %v", resp.Status)
+	}
+	// Unmarshal the response.
+	err = json.Unmarshal(body, &authGrpInst)
+	if err != nil {
+		log.Fatalf("[error-admin] unmarshaling response: %v", err)
+	}
+	return authGrpInst.LoginCode
 }
 
 func loginCode(userId string, code int) string {
@@ -162,15 +203,19 @@ func loginCode(userId string, code int) string {
 }
 
 func wrappedLoginCode() {
-
-	if testUserId == "" || testCode == 0 {
-		fmt.Println("[error-admin] No hardcoded userID and code for test.")
-		// TODO: Add code to signup a new user and replace with message below.
-		// fmt.Println("[error-admin] No hardcoded userID or login code for test. Add info or signup/login a new user first.")
+	// Check to make sure testUserId is set.
+	if testUserId == "" {
+		fmt.Println("[error-admin] No hard-coded test userId. Add manually, or signup/login a new user first.")
 		return
 	}
-	// TODO: Check that token was returned. An incorrect code will return attemptsRemaining only.
-	testToken = loginCode(testUserId, testCode)
+
+	// No hard-coded testLoginCode. Get code from the server.
+	if testLoginCode == 0 {
+		testLoginCode = getLoginCode(testUserId)
+	}
+
+	// Proceed with api call to login-code.
+	testToken = loginCode(testUserId, testLoginCode)
 	log.Printf("[cp-admin] UserId: %s, Token: %s\n", testUserId, testToken)
 }
 
