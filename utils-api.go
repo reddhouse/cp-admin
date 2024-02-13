@@ -222,14 +222,36 @@ func wrappedLoginCode() {
 func logout() {
 	url := "http://localhost:8000/user/logout/"
 	jsonData := []byte(fmt.Sprintf(`{"userId":"%s"}`, testUserId))
-	// Send POST request using the default http client.
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+
+	// Create a new request using http.
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Fatalf("[error-admin] creating request: %v", err)
+		return
+	}
+
+	// Add authorization header to the request.
+	req.Header.Add("Authorization", "Bearer "+testToken)
+	// Set Content-Type header to application/json.
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request using http Client.
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatalf("[error-admin] posting request: %v", err)
 		return
 	}
 	defer resp.Body.Close()
+
+	// Read the entire response body into memory.
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("[error-admin] reading response: %v", err)
+	}
+
 	fmt.Println("-> Response Status:", resp.Status)
+	fmt.Println("-> Response Body:", string(body))
 }
 
 func logUserEmailBucket() {
