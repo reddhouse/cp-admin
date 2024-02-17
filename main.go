@@ -3,10 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
-
-	"cp-admin.cooperativeparty.org/hetzner"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/term"
@@ -33,7 +30,7 @@ var menu = [...]menuItems{
 		children: []command{
 			{
 				desc: "Check Server 1",
-				cmd:  hetzner.DoStuff,
+				cmd:  doHetznerStuff,
 			},
 		},
 	},
@@ -187,7 +184,8 @@ func updateMenuSelections(bs []byte, ms *menuSelections) {
 func loadEnvVariables() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("[error-admin] loading .env file")
+		fmt.Printf("[err][admin] loading .env file: %v [%s]\n", err, cts())
+		os.Exit(1)
 	}
 }
 
@@ -226,8 +224,7 @@ func runSelectedCommands() {
 }
 
 func main() {
-	log.SetPrefix("[cp-admin] ")
 	loadEnvVariables()
 	runSelectedCommands()
-	log.Printf("exiting...\n")
+	fmt.Printf("[admin] exiting... [%s]\n", cts())
 }

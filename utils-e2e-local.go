@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -31,16 +30,18 @@ func prepareDirectory(dir string) error {
 		// Reads until the first occurrence of newline delimiter.
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			log.Fatalf("[error-admin] reading user input: %v", err)
+			fmt.Printf("[err][admin] reading user input: %v [%s]\n", err, cts())
+			os.Exit(1)
 		}
 
 		// If yes, delete the directory.
 		if input == "y\n" || input == "Y\n" {
 			err = os.RemoveAll(dir)
 			if err != nil {
-				log.Fatalf("[error-admin] deleting existing directory: %v", err)
+				fmt.Printf("[err][admin] deleting existing directory: %v [%s]\n", err, cts())
+				os.Exit(1)
 			}
-			log.Printf("Directory deleted.\n")
+			fmt.Printf("[admin] directory deleted [%s]\n", cts())
 		} else {
 			// If no, return error.
 			return fmt.Errorf("user declined to delete existing directory")
@@ -50,9 +51,10 @@ func prepareDirectory(dir string) error {
 	// Create a new temp directory.
 	err := os.Mkdir(dir, 0755)
 	if err != nil {
-		log.Fatalf("[error-admin] creating temp directory: %v", err)
+		fmt.Printf("[err][admin] creating temp directory: %v [%s]\n", err, cts())
+		os.Exit(1)
 	}
-	log.Printf("New directory created: %v\n", dir)
+	fmt.Printf("[admin] new directory created: %v [%s]\n", dir, cts())
 
 	return nil
 }
@@ -62,7 +64,7 @@ func runEndToEndLocal() {
 	// running in another process, abort this test.
 	err := apiServerOffline()
 	if err != nil {
-		log.Printf("[error-admin] confirming server is offline: %v\n", err)
+		fmt.Printf("[err][admin] confirming server is offline: %v [%s]\n", err, cts())
 		return
 	}
 
@@ -70,7 +72,8 @@ func runEndToEndLocal() {
 	dir := "temp-e2e"
 	err = prepareDirectory(dir)
 	if err != nil {
-		log.Fatalf("[error-admin] preparing directory: %v", err)
+		fmt.Printf("[err][admin] preparing directory: %v [%s]\n", err, cts())
+		os.Exit(1)
 	}
 
 	// Git clone API into the temp directory.
@@ -82,12 +85,13 @@ func runEndToEndLocal() {
 	// Run command and wait for it to complete.
 	err = goGetCmd.Run()
 	if err != nil {
-		log.Fatalf("[error-admin] running git clone command (silently): %v", err)
+		fmt.Printf("[err][admin] running git clone command (silently): %v [%s]\n", err, cts())
+		os.Exit(1)
 	}
 
 	// Setup command to start the cp-api server in a subprocess.
 	subDir := "cp-api"
-	runCmd := exec.Command("/Users/jmt/sdk/go1.22rc1/bin/go", "run", ".", "-env=dev")
+	runCmd := exec.Command("go", "run", ".", "-env=dev")
 	runCmd.Dir = fmt.Sprintf("%s/%s", dir, subDir)
 	runCmd.Stdout = os.Stdout
 	runCmd.Stderr = os.Stderr
@@ -95,10 +99,11 @@ func runEndToEndLocal() {
 	// Start server but don't wait in order to proceed with testing.
 	err = runCmd.Start()
 	if err != nil {
-		log.Fatalf("[error-admin] starting an exec.Command: %v", err)
+		fmt.Printf("[err][admin] starting an exec.Command: %v [%s]\n", err, cts())
+		os.Exit(1)
 	}
 
-	log.Printf("Subprocess exec.Command has PID: %d\n", runCmd.Process.Pid)
+	fmt.Printf("[admin] subprocess exec.Command has PID: %d [%s]\n", runCmd.Process.Pid, cts())
 
 	// Delay a bit while server starts.
 	for i := 0; i < 10; i++ {
@@ -117,6 +122,7 @@ func runEndToEndLocal() {
 	// Wait for previously started command to exit.
 	err = runCmd.Wait()
 	if err != nil {
-		log.Fatalf("[error-admin] waiting for exec.Command to exit: %v", err)
+		fmt.Printf("[err][admin] waiting for exec.Command to exit: %v [%s]\n", err, cts())
+		os.Exit(1)
 	}
 }

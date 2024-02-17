@@ -1,25 +1,26 @@
-package hetzner
+package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 )
 
-func DoStuff() {
+func doHetznerStuff() {
 	token := os.Getenv("HETZNER_API_TOKEN")
 	client := hcloud.NewClient(hcloud.WithToken(token))
 
 	server, _, err := client.Server.GetByID(context.Background(), 1)
 	if err != nil {
-		log.Fatalf("[error-admin] retrieving server: %s", err)
+		fmt.Printf("[err][admin] retrieving server: %s [%s]\n", err, cts())
+		os.Exit(1)
 		return
 	}
 	if server != nil {
-		log.Printf("Server 1 is called: %q\n", server.Name)
+		fmt.Printf("[admin] server 1 is called: %q [%s]\n", server.Name, cts())
 	} else {
-		log.Printf("Server 1 not found\n")
+		fmt.Printf("[err][admin] server 1 not found [%s]\n", cts())
 	}
 }
