@@ -46,7 +46,7 @@ func signup(email string) string {
 	}
 	var responseBodyInst responseBody
 	var url = "http://localhost:8000/user/signup/"
-	var jsonData = []byte(`{"email":"` + testEmail + `"}`)
+	var jsonData = []byte(`{"email":"` + email + `"}`)
 
 	// Send POST request using the default http client.
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
