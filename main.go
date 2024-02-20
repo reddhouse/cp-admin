@@ -26,8 +26,16 @@ type menuSelections struct {
 
 var menu = [...]menuItems{
 	{
-		parent: "Misc",
+		parent: "PROVISION LOCAL",
 		children: []command{
+			{
+				desc: "Generate Private Key",
+				cmd:  generatePrivateKey,
+			},
+			{
+				desc: "Copy Private Key to Local API Server",
+				cmd:  wrappedCopyPrivateKeyLocal,
+			},
 			{
 				desc: "Check Server 1",
 				cmd:  doHetznerStuff,
