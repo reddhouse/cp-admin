@@ -11,36 +11,37 @@ import (
 	"os"
 )
 
-func generatePrivateKey() {
-	// Check if the private key file exists.
+func generatePrivateKeyFile() {
+	// Double check that private key file is not present (do not overwrite).
 	_, err := os.Stat("cp.pem")
-	if os.IsNotExist(err) {
-		var err error
-		// The private key file does not exist, so generate a new key.
-		cpPrivateKey, err := rsa.GenerateKey(cryptoRand.Reader, 2048)
-		if err != nil {
-			fmt.Printf("[err][admin] creating private key: %v [%s]\n", err, cts())
-			os.Exit(1)
-		}
-
-		// Encode the private key into PEM format.
-		privateKeyBytes := x509.MarshalPKCS1PrivateKey(cpPrivateKey)
-		privateKeyPEM := pem.EncodeToMemory(&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: privateKeyBytes,
-		})
-
-		// Write the PEM to a file.
-		err = os.WriteFile("cp.pem", privateKeyPEM, 0600)
-		if err != nil {
-			fmt.Printf("[err][admin] writing private key to disk: %v [%s]\n", err, cts())
-			os.Exit(1)
-		}
-		fmt.Printf("[admin] private key successfully created [%s]\n", cts())
-	} else {
-		// The private key file exists. Ask user to manually delete it.
-		fmt.Printf("[err][admin] \"cp.pem\" already exists; delete if you wish to proceed with new key generation [%s]\n", cts())
+	if os.IsExist(err) {
+		// A private key file exists. Notify user.
+		fmt.Printf("[err][admin] attempting to create private key file, but \"cp.pem\" already exists [%s]\n", cts())
+		return
 	}
+
+	// The private key file does not exist, so generate a new key.
+	cpPrivateKey, err := rsa.GenerateKey(cryptoRand.Reader, 2048)
+	if err != nil {
+		fmt.Printf("[err][admin] creating private key: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+
+	// Encode the private key into PEM format.
+	privateKeyBytes := x509.MarshalPKCS1PrivateKey(cpPrivateKey)
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyBytes,
+	})
+
+	// Write the PEM to a file.
+	err = os.WriteFile("cp.pem", privateKeyPEM, 0600)
+	if err != nil {
+		fmt.Printf("[err][admin] writing private key to disk: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+	fmt.Printf("[admin] private key successfully created [%s]\n", cts())
+
 }
 
 func copyPrivateKeyLocal() {

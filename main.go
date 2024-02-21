@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"fmt"
 	"os"
 
@@ -24,14 +25,13 @@ type menuSelections struct {
 	selectedChild  int
 }
 
+var cpPrivateKey *rsa.PrivateKey
+var adminAuthToken string
+
 var menu = [...]menuItems{
 	{
 		parent: "PROVISION LOCAL",
 		children: []command{
-			{
-				desc: "Generate Private Key",
-				cmd:  generatePrivateKey,
-			},
 			{
 				desc: "Copy Private Key to Local API Server",
 				cmd:  wrappedCopyPrivateKeyLocal,
@@ -68,6 +68,10 @@ var menu = [...]menuItems{
 			{
 				desc: "Log USER_AUTH Bucket",
 				cmd:  logUserAuthBucket,
+			},
+			{
+				desc: "Log ADMIN_EMAIL Bucket",
+				cmd:  logAdminEmailBucket,
 			},
 			{
 				desc: "Shutdown Server",
@@ -233,6 +237,15 @@ func runSelectedCommands() {
 
 func main() {
 	loadEnvVariables()
+
+	// Generate private key file if it doesn't already exist.
+	_, err := os.Stat("cp.pem")
+	if os.IsNotExist(err) {
+		generatePrivateKeyFile()
+	}
+
+	setPrivateKey()
+	setAdminAuthToken()
 	runSelectedCommands()
 	fmt.Printf("[admin] exiting... [%s]\n", cts())
 }

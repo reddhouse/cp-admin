@@ -129,10 +129,20 @@ func getLoginCode(userId string) (int, error) {
 	var responseBodyInst responseBody
 	var url = fmt.Sprintf("http://localhost:8000/admin/bypass-email/%s", testUserId)
 
-	// Send GET request using the default http client.
-	resp, err := http.Get(url)
+	// Create a new request using http.
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Printf("[err][admin] getting request: %v [%s]\n", err, cts())
+		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+
+	// Set custom admin auth header.
+	req.Header.Set("Admin-Authorization", adminAuthToken)
+
+	// Send the request.
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
@@ -228,9 +238,8 @@ func logout() {
 	// Set Content-Type header to application/json.
 	req.Header.Set("Content-Type", "application/json")
 
-	// Send request using http Client.
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// Send request.
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
@@ -250,36 +259,96 @@ func logout() {
 
 func logUserEmailBucket() {
 	url := "http://localhost:8000/admin/log-bucket-custom-key/USER_EMAIL"
-	resp, err := http.Post(url, "", nil)
+
+	// Create a new request using http.
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+
+	// Set custom admin auth header.
+	req.Header.Set("Admin-Authorization", adminAuthToken)
+
+	// Send the request.
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
+
 	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
 }
 
 func logUserAuthBucket() {
 	url := "http://localhost:8000/admin/log-bucket/USER_AUTH"
-	resp, err := http.Post(url, "", nil)
+	// Create a new request using http.
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+
+	// Set custom admin auth header.
+	req.Header.Set("Admin-Authorization", adminAuthToken)
+
+	// Send the request.
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
+
+	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
+}
+
+func logAdminEmailBucket() {
+	url := "http://localhost:8000/admin/log-bucket/ADMIN_EMAIL"
+	// Create a new request using http.
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+
+	// Set custom admin auth header.
+	req.Header.Set("Admin-Authorization", adminAuthToken)
+
+	// Send the request.
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
 	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
 }
 
 // Test /admin/shutdown/ endpoint.
 func shutdown() {
 	url := "http://localhost:8000/admin/shutdown/"
-	jsonData := []byte(``)
-	// Send POST request using the default http client.
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+
+	// Create a new request using http.
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+
+	// Set custom admin auth header.
+	req.Header.Set("Admin-Authorization", adminAuthToken)
+
+	// Send the request.
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
+		os.Exit(1)
 	}
 	defer resp.Body.Close()
+
 	// Read response body into memory so we can print it.
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
