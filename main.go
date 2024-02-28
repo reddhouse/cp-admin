@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"github.com/joho/godotenv"
 	"golang.org/x/term"
 )
@@ -28,6 +29,9 @@ type menuSelections struct {
 var cpPrivateKey *rsa.PrivateKey
 var adminAuthToken string
 
+// Hetzner API client.
+var hcloudClient *hcloud.Client
+
 var menu = [...]menuItems{
 	{
 		parent: "PROVISION LOCAL",
@@ -36,9 +40,18 @@ var menu = [...]menuItems{
 				desc: "Copy Private Key to Local API Server",
 				cmd:  wrappedCopyPrivateKeyLocal,
 			},
+		},
+	},
+	{
+		parent: "PROVISION REMOTE",
+		children: []command{
 			{
 				desc: "Check Server 1",
 				cmd:  doHetznerStuff,
+			},
+			{
+				desc: "Copy Private Key to Local API Server",
+				cmd:  hetznerCreateSSHKey,
 			},
 		},
 	},
@@ -201,6 +214,11 @@ func loadEnvVariables() {
 	}
 }
 
+func setHetznerCloudClient() {
+	token := os.Getenv("HETZNER_API_TOKEN")
+	hcloudClient = hcloud.NewClient(hcloud.WithToken(token))
+}
+
 func runSelectedCommands() {
 	// Capture various key press events in 4-byte slice.
 	bs := make([]byte, 4)
@@ -220,6 +238,7 @@ func runSelectedCommands() {
 		// Respond to enter key (command selection) without clearing menu.
 		if bytes.Equal(bs, enterKey) && ms.selectedChild >= 0 {
 			selectedCommand := menu[ms.selectedParent].children[ms.selectedChild]
+			// Run synchronous command and block until completion.
 			selectedCommand.cmd()
 		} else {
 			// Some other (non-enter) key was pressed.
@@ -246,6 +265,7 @@ func main() {
 
 	setPrivateKey()
 	setAdminAuthToken()
+	setHetznerCloudClient()
 	runSelectedCommands()
 	fmt.Printf("[admin] exiting... [%s]\n", cts())
 }
