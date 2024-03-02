@@ -46,12 +46,20 @@ var menu = [...]menuItems{
 		parent: "PROVISION REMOTE",
 		children: []command{
 			{
-				desc: "Check Server 1",
-				cmd:  doHetznerStuff,
+				desc: "View Current Resources",
+				cmd:  hetznerViewCurrentResources,
 			},
 			{
-				desc: "Copy Private Key to Local API Server",
+				desc: "Create SSH Key",
 				cmd:  hetznerCreateSSHKey,
+			},
+			{
+				desc: "Write user_data_test.yml to Disk for Debugging",
+				cmd:  writeUserDataToFile,
+			},
+			{
+				desc: "Create Server 1",
+				cmd:  hetznerCreateServer1,
 			},
 		},
 	},
