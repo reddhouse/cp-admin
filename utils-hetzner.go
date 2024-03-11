@@ -10,12 +10,14 @@ import (
 )
 
 type UserData struct {
-	Users          []User   `yaml:"users"`
-	PackageUpdate  bool     `yaml:"package_update"`
-	PackageUpgrade bool     `yaml:"package_upgrade"`
-	Packages       []string `yaml:"packages"`
-	WriteFiles     []File   `yaml:"write_files"`
-	RunCmd         []string `yaml:"runcmd"`
+	Users          []User    `yaml:"users"`
+	AptUpgrade     bool      `yaml:"apt_upgrade"`
+	Apt            AptConfig `yaml:"apt"`
+	PackageUpdate  bool      `yaml:"package_update"`
+	PackageUpgrade bool      `yaml:"package_upgrade"`
+	Packages       []string  `yaml:"packages"`
+	WriteFiles     []File    `yaml:"write_files"`
+	RunCmd         []string  `yaml:"runcmd"`
 }
 
 type User struct {
@@ -25,6 +27,14 @@ type User struct {
 	Shell             string   `yaml:"shell"`
 	LockPasswd        bool     `yaml:"lock_passwd"`
 	SshAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
+}
+
+type AptConfig struct {
+	Sources map[string]SourceConfig `yaml:"sources"`
+}
+
+type SourceConfig struct {
+	Source string `yaml:"source"`
 }
 
 type File struct {
@@ -120,45 +130,58 @@ func createUserData() string {
 				SshAuthorizedKeys: []string{string(pubKey)},
 			},
 		},
+		AptUpgrade: true,
+		Apt: AptConfig{
+			Sources: map[string]SourceConfig{
+				"caddy": {
+					Source: "deb [trusted=yes] https://dl.cloudsmith.io/public/caddy/stable/deb/ubuntu jammy main",
+				},
+			},
+		},
 		PackageUpdate:  true,
 		PackageUpgrade: true,
 		Packages: []string{
-			"nginx",
-			"snapd",
-			"fail2ban",
+			"caddy",
 			"ufw",
 			"unzip",
 		},
 		WriteFiles: []File{
 			{
-				Path: "/etc/nginx/sites-available/cp",
-				Content: `server {
-    server_name cooperativeparty.org www.cooperativeparty.org;
-    listen 80;
-    location /api {
-        proxy_set_header   X-Forwarded-For $remote_addr;
-        proxy_set_header   Host $http_host;
-        proxy_pass         "http://127.0.0.1:8000";
-    }
-}`,
+				Path: "/etc/caddy/Caddyfile",
+				Content: fmt.Sprintf(`{
+	http_port 80
+	https_port 443
+}
+				
+cooperativeparty.org, www.cooperativeparty.org {
+	@http {
+		protocol http
+	}
+	redir @http https://{host}{uri} 301
+	tls %s
+}
+
+:80 {
+	respond "Hello, world 80!"
+}
+
+:443 {
+	respond "Hello, world 443!"
+}`, os.Getenv("CP_ADMIN_USER_ONE_EMAIL")),
 				// An empty string sets owner to default (root).
-				// Owner: nginx:nginx was causing an error in cloud-init,
-				// perhaps due to nginx package installation taking too long
-				// before the write_files module was run.
 				Owner: "",
-				// When Owner: nginx:nginx, I had permissions set to "0640".
-				// Now I want to make sure nginx process can read the file, even
-				// if it's not the owner, so set to 0644.
+				// Allow owner to read and write, and the group/others to read.
 				Permissions: "0644",
-				Defer:       true,
+				// No reason to wait until final stage of cloud-init to write.
+				Defer: false,
 			},
 		},
 		RunCmd: []string{
-			"systemctl enable nginx",
-			"ufw allow 'Nginx Full'",
-			`printf "[sshd]\nenabled = true\nbanaction = iptables-multiport" > /etc/fail2ban/jail.local`,
-			"systemctl enable fail2ban",
-			"systemctl start fail2ban",
+			// Enable Caddy to start on boot and start it immediately (now flag).
+			"systemctl enable --now caddy",
+			// Allow incoming traffic on HTTP (80), HTTPS (443), and SSH (22) ports.
+			"ufw allow http",
+			"ufw allow https",
 			"ufw allow 'OpenSSH'",
 			"ufw enable",
 			// Disallow root login.
