@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"gopkg.in/yaml.v3"
@@ -45,7 +46,11 @@ type File struct {
 	Defer       bool   `yaml:"defer"`
 }
 
-func hetznerViewCurrentResources() {
+// Global variable to hold server names and hcloud server instances
+var serverMap map[string]*hcloud.Server = make(map[string]*hcloud.Server)
+
+// Uses the Hetzner API client to grab known resources and store server info in a local variable.
+func hetznerGetAndSetCurrentResources() {
 	// SSH Key(s)
 	sshKeys, err := hcloudClient.SSHKey.All(context.TODO())
 	if err != nil {
@@ -79,12 +84,18 @@ func hetznerViewCurrentResources() {
 		return
 	}
 
-	// Print all servers.
+	// Set servers in global serverMap variable (name:server mapping).
 	for _, server := range servers {
-		fmt.Printf("[admin] server ID: %d, name: %s, status: %s [%s]\n", server.ID, server.Name, server.Status, cts())
+		serverMap[server.Name] = server
+	}
+
+	// Print all servers.
+	for _, server := range serverMap {
+		fmt.Printf("[admin] server ID: %d, ip: %s, name: %s, status: %s [%s]\n", server.ID, server.PublicNet.IPv4.IP, server.Name, server.Status, cts())
 	}
 }
 
+// Creates a new SSH key on Hetzner cloud.
 func hetznerCreateSSHKey() {
 	pubKeyPath := os.Getenv("LOCAL_PUBLIC_KEY_PATH")
 	pubKey, err := os.ReadFile(pubKeyPath)
@@ -110,6 +121,7 @@ func hetznerCreateSSHKey() {
 	fmt.Printf("[admin] created SSH key with ID: %v [%s]", sshKey.ID, cts())
 }
 
+// Creates a yaml formatted string of "user data" for cloud-init.
 func createUserData() string {
 	pubKeyPath := os.Getenv("LOCAL_PUBLIC_KEY_PATH")
 	pubKey, err := os.ReadFile(pubKeyPath)
@@ -217,7 +229,8 @@ func writeUserDataToFile() {
 	fmt.Printf("[admin] user data successfully written to file [%s]\n", cts())
 }
 
-func hetznerCreateServer1() {
+// Create a Hetzner cloud server instance with the name "cp-1".
+func hetznerCreateServerOne() {
 	// Get the SSH key by name.
 	sshKey, _, err := hcloudClient.SSHKey.Get(context.TODO(), os.Getenv("HETZNER_PUBLIC_KEY_NAME"))
 	if err != nil {
@@ -243,5 +256,35 @@ func hetznerCreateServer1() {
 	}
 
 	// Print the ID of the created server
-	fmt.Printf("[admin] created server with ID: %v [%s]\n", result.Server.ID, cts())
+	fmt.Printf("[admin] created server with ID: %v, and IP: %v [%s]\n", result.Server.ID, result.Server.PublicNet.IPv4.IP, cts())
+}
+
+// Delete Hetzner cloud server instance that has the name "cp-1".
+func hetznerDeleteServerOne() {
+	server, ok := serverMap["cp-1"]
+	if !ok {
+		fmt.Printf("[err][admin] server with name \"cp-1\" not found locally... run Get/Set Current Resources command[%s]\n", cts())
+		return
+	}
+
+	_, _, err := hcloudClient.Server.DeleteWithResult(context.TODO(), server)
+	if err != nil {
+		fmt.Printf("[err][admin] deleting server: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+
+	fmt.Printf("[admin] deleted server cp-1 [%s]\n", cts())
+	fmt.Printf("[admin] removing known host... [%s]\n", cts())
+
+	// Remove cp-1 IP address from ssh known hosts.
+	goGetCmd := exec.Command("ssh-keygen", "-R", server.PublicNet.IPv4.IP.String())
+	goGetCmd.Stdout = os.Stdout
+	goGetCmd.Stderr = os.Stderr
+
+	// Run command and wait for it to complete.
+	err = goGetCmd.Run()
+	if err != nil {
+		fmt.Printf("[err][admin] running ssh-keygen -R command: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
 }

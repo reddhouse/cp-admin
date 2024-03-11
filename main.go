@@ -46,8 +46,8 @@ var menu = [...]menuItems{
 		parent: "PROVISION REMOTE",
 		children: []command{
 			{
-				desc: "View Current Resources",
-				cmd:  hetznerViewCurrentResources,
+				desc: "Get/Set Current Resources",
+				cmd:  hetznerGetAndSetCurrentResources,
 			},
 			{
 				desc: "Create SSH Key",
@@ -59,7 +59,11 @@ var menu = [...]menuItems{
 			},
 			{
 				desc: "Create Server 1",
-				cmd:  hetznerCreateServer1,
+				cmd:  hetznerCreateServerOne,
+			},
+			{
+				desc: "Delete Server 1",
+				cmd:  hetznerDeleteServerOne,
 			},
 		},
 	},
