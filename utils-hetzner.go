@@ -148,25 +148,20 @@ func createUserData() string {
 		WriteFiles: []File{
 			{
 				Path: "/etc/caddy/Caddyfile",
-				Content: fmt.Sprintf(`{
-	http_port 80
-	https_port 443
+				Content: fmt.Sprintf(`www.cooperativeparty.org {
+	redir https://cooperativeparty.org{uri} permanent
 }
-				
-cooperativeparty.org, www.cooperativeparty.org {
-	@http {
-		protocol http
-	}
-	redir @http https://{host}{uri} 301
+
+cooperativeparty.org {
 	tls %s
-}
+	header Content-Type text/html
+	respond <<HTML
+		<html>
+			<head><title>Foo</title></head>
+			<body>Foo</body>
+		</html>
+		HTML 200
 
-:80 {
-	respond "Hello, world 80!"
-}
-
-:443 {
-	respond "Hello, world 443!"
 }`, os.Getenv("CP_ADMIN_USER_ONE_EMAIL")),
 				// An empty string sets owner to default (root).
 				Owner: "",
