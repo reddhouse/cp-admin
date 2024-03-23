@@ -87,6 +87,19 @@ var menu = [...]menuItems{
 				cmd:  logout,
 			},
 			{
+				desc: "Create Exim",
+				cmd:  createExim,
+			},
+		},
+	},
+	{
+		parent: "ADMIN",
+		children: []command{
+			{
+				desc: "Shutdown Server",
+				cmd:  shutdown,
+			},
+			{
 				desc: "Log USER_EMAIL Bucket",
 				cmd:  logUserEmailBucket,
 			},
@@ -99,8 +112,8 @@ var menu = [...]menuItems{
 				cmd:  logAdminEmailBucket,
 			},
 			{
-				desc: "Shutdown Server",
-				cmd:  shutdown,
+				desc: "Log MOD_EXIM Bucket",
+				cmd:  logModEximBucket,
 			},
 		},
 	},

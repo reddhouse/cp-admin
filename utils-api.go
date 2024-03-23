@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"net/http"
 	"os"
@@ -31,6 +31,16 @@ func generateRandomEmailAddress() string {
 	source := rand.NewSource(time.Now().UnixNano())
 	rng := rand.New(source)
 	return words[rng.Intn(len(words))] + words[rng.Intn(len(words))] + words[rng.Intn(len(words))] + "@email.com"
+}
+
+func generatePlaceholderText(numWords int) string {
+	source := rand.NewSource(time.Now().UnixNano())
+	rng := rand.New(source)
+	result := ""
+	for i := 0; i < numWords; i++ {
+		result += words[rng.Intn(len(words))] + " "
+	}
+	return result
 }
 
 func signup(email string) (string, error) {
@@ -117,7 +127,7 @@ func wrappedLogin() {
 	fmt.Printf("[admin] email: %s, userId: %s [%s]\n", testEmail, testUserId, cts())
 }
 
-// Gets a loginCode for a given userId by posting a request to a restricted
+// Get a loginCode for a given userId by posting a request to a restricted
 // endpoint called bypass-email. Normally a code is emailed to users.
 func getLoginCode(userId string) (int, error) {
 	type responseBody struct {
@@ -257,20 +267,53 @@ func logout() {
 
 }
 
-func logUserEmailBucket() {
-	url := "http://localhost:8000/admin/log-bucket-custom-key/USER_EMAIL"
+func createExim() {
+	type requestBody struct {
+		Target     string `json:"target"`
+		Title      string `json:"title"`
+		Summary    string `json:"summary"`
+		Paragraph1 string `json:"paragraph1"`
+		Paragraph2 string `json:"paragraph2"`
+		Paragraph3 string `json:"paragraph3"`
+		Link       string `json:"link"`
+	}
+	type responseBody struct {
+		EximId string `json:"eximId"`
+		Error  string `json:"error"`
+	}
+	var requestBodyInst requestBody
+	var responseBodyInst responseBody
+	var url = "http://localhost:8000/exim/create/"
 
-	// Create a new request using http.
-	req, err := http.NewRequest("POST", url, nil)
+	// Fill Exim with random, placeholder text.
+	requestBodyInst.Target = "FEDERAL"
+	requestBodyInst.Title = generatePlaceholderText(5)
+	requestBodyInst.Summary = generatePlaceholderText(20)
+	requestBodyInst.Paragraph1 = generatePlaceholderText(40)
+	requestBodyInst.Paragraph2 = generatePlaceholderText(40)
+	requestBodyInst.Paragraph3 = generatePlaceholderText(40)
+	requestBodyInst.Link = fmt.Sprintf("https://%s.com", generatePlaceholderText(3))
+
+	// Marshal the request body to JSON.
+	jsonData, err := json.Marshal(requestBodyInst)
 	if err != nil {
-		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
+		fmt.Printf("[err][admin] marshaling request body: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
 
-	// Set custom admin auth header.
-	req.Header.Set("Admin-Authorization", adminAuthToken)
+	// Create a new request using http.
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Printf("[err][admin] creating new request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
 
-	// Send the request.
+	// Add authorization header to the request.
+	req.Header.Add("Authorization", "Bearer "+testToken)
+	// Set Content-Type header to application/json.
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request.
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
@@ -279,83 +322,13 @@ func logUserEmailBucket() {
 	defer resp.Body.Close()
 
 	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
-}
 
-func logUserAuthBucket() {
-	url := "http://localhost:8000/admin/log-bucket/USER_AUTH"
-	// Create a new request using http.
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
-		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
-		os.Exit(1)
+	unmarshalOrExit(resp.Body, &responseBodyInst)
+
+	// Check if the server returned an error message.
+	if responseBodyInst.Error != "" {
+		fmt.Printf("[admin] api server returned error: %s [%s]\n", responseBodyInst.Error, cts())
+	} else {
+		fmt.Printf("[admin] ulid of new exim: %s [%s]\n", responseBodyInst.EximId, cts())
 	}
-
-	// Set custom admin auth header.
-	req.Header.Set("Admin-Authorization", adminAuthToken)
-
-	// Send the request.
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
-
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
-}
-
-func logAdminEmailBucket() {
-	url := "http://localhost:8000/admin/log-bucket/ADMIN_EMAIL"
-	// Create a new request using http.
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
-		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
-		os.Exit(1)
-	}
-
-	// Set custom admin auth header.
-	req.Header.Set("Admin-Authorization", adminAuthToken)
-
-	// Send the request.
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
-
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
-}
-
-// Test /admin/shutdown/ endpoint.
-func shutdown() {
-	url := "http://localhost:8000/admin/shutdown/"
-
-	// Create a new request using http.
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
-		fmt.Printf("[err][admin] creating request: %v [%s]\n", err, cts())
-		os.Exit(1)
-	}
-
-	// Set custom admin auth header.
-	req.Header.Set("Admin-Authorization", adminAuthToken)
-
-	// Send the request.
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
-
-	// Read response body into memory so we can print it.
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("[err][admin] reading response body: %v [%s]\n", err, cts())
-		os.Exit(1)
-	}
-
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
-	fmt.Printf("[admin] response body: %s [%s]\n", body, cts())
 }
