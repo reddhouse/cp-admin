@@ -89,12 +89,14 @@ func runEndToEndLocal() {
 		os.Exit(1)
 	}
 
-	// Setup command to start the cp-api server in a subprocess.
+	// Setup command to start the cp-api server in a subprocess and set environment variables.
 	subDir := "cp-api"
-	runCmd := exec.Command("go", "run", ".", "-env=dev")
+	runCmd := exec.Command("go", "run", ".", "-env=e2e")
 	runCmd.Dir = fmt.Sprintf("%s/%s", dir, subDir)
 	runCmd.Stdout = os.Stdout
 	runCmd.Stderr = os.Stderr
+	runCmd.Env = append(os.Environ(), fmt.Sprintf("ADMIN_ONE_EMAIL=%s", os.Getenv("ADMIN_ONE_EMAIL")))
+	runCmd.Env = append(os.Environ(), fmt.Sprintf("ADMIN_ONE_ULID=%s", os.Getenv("ADMIN_ONE_ULID")))
 
 	// Start server but don't wait in order to proceed with testing.
 	err = runCmd.Start()
