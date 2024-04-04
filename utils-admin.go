@@ -9,7 +9,7 @@ import (
 
 // Shut down API server gracefully.
 func shutdown() {
-	url := "http://localhost:8000/admin/shutdown/"
+	url := "http://localhost:8000/api/admin/shutdown/"
 
 	// Create a new request using http.
 	req, err := http.NewRequest("POST", url, nil)
@@ -42,7 +42,7 @@ func shutdown() {
 
 // Log USER_EMAIL bucket on API server.
 func logUserEmailBucket() {
-	url := "http://localhost:8000/admin/log-bucket-custom-key/USER_EMAIL"
+	url := "http://localhost:8000/api/admin/log-bucket-custom-key/USER_EMAIL"
 
 	// Create a new request using http.
 	req, err := http.NewRequest("POST", url, nil)
@@ -67,7 +67,7 @@ func logUserEmailBucket() {
 
 // Log USER_AUTH bucket on API server.
 func logUserAuthBucket() {
-	url := "http://localhost:8000/admin/log-bucket/USER_AUTH"
+	url := "http://localhost:8000/api/admin/log-bucket/USER_AUTH"
 	// Create a new request using http.
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
@@ -91,7 +91,7 @@ func logUserAuthBucket() {
 
 // Log ADMIN_EMAIL bucket on API server.
 func logAdminEmailBucket() {
-	url := "http://localhost:8000/admin/log-bucket/ADMIN_EMAIL"
+	url := "http://localhost:8000/api/admin/log-bucket/ADMIN_EMAIL"
 	// Create a new request using http.
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
@@ -115,7 +115,7 @@ func logAdminEmailBucket() {
 
 // Log MOD_EXIM bucket on API server.
 func logModEximBucket() {
-	url := "http://localhost:8000/admin/log-bucket/MOD_EXIM"
+	url := "http://localhost:8000/api/admin/log-bucket/MOD_EXIM"
 	// Create a new request using http.
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {

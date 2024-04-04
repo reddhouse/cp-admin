@@ -49,7 +49,7 @@ func signup(email string) (string, error) {
 		Error  string `json:"error"`
 	}
 	var responseBodyInst responseBody
-	var url = "http://localhost:8000/user/signup/"
+	var url = "http://localhost:8000/api/user/signup/"
 	var jsonData = []byte(`{"email":"` + email + `"}`)
 
 	// Send POST request using the default http client.
@@ -91,7 +91,7 @@ func login(email string) (string, error) {
 		Error  string `json:"error"`
 	}
 	var responseBodyInst responseBody
-	var url = "http://localhost:8000/user/login/"
+	var url = "http://localhost:8000/api/user/login/"
 	var jsonData = []byte(fmt.Sprintf(`{"email":"%s"}`, email))
 
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
@@ -137,7 +137,7 @@ func getLoginCode(userId string) (int, error) {
 		Error         string    `json:"error"`
 	}
 	var responseBodyInst responseBody
-	var url = fmt.Sprintf("http://localhost:8000/admin/bypass-email/%s", testUserId)
+	var url = fmt.Sprintf("http://localhost:8000/api/admin/bypass-email/%s", testUserId)
 
 	// Create a new request using http.
 	req, err := http.NewRequest("GET", url, nil)
@@ -177,7 +177,7 @@ func loginCode(userId string, code int) (string, int, error) {
 		Error             string `json:"error"`
 	}
 	var responseBodyInst responseBody
-	var url = "http://localhost:8000/user/login-code/"
+	var url = "http://localhost:8000/api/user/login-code/"
 	var jsonData = []byte(fmt.Sprintf(`{"userId":"%s","code":%d}`, userId, code))
 	// Send POST request using the default http client.
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
@@ -233,7 +233,7 @@ func logout() {
 		Error string `json:"error"`
 	}
 	var responseBodyInst responseBody
-	url := "http://localhost:8000/user/logout/"
+	url := "http://localhost:8000/api/user/logout/"
 	jsonData := []byte(fmt.Sprintf(`{"userId":"%s"}`, testUserId))
 
 	// Create a new request using http.
@@ -283,7 +283,7 @@ func createExim() {
 	}
 	var requestBodyInst requestBody
 	var responseBodyInst responseBody
-	var url = "http://localhost:8000/exim/create/"
+	var url = "http://localhost:8000/api/exim/create/"
 
 	// Fill Exim with random, placeholder text.
 	requestBodyInst.Target = "FEDERAL"
