@@ -59,6 +59,39 @@ func prepareDirectory(dir string) error {
 	return nil
 }
 
+func runEndToEndSequence() {
+	emailAddr := generateRandomEmailAddress()
+	// Signup.
+	_, err := signup(emailAddr)
+	if err != nil {
+		return
+	}
+	// Login.
+	userId, err := login(emailAddr)
+	if err != nil {
+		return
+	}
+	// Get login code (admin bypass).
+	actualCode, err := getLoginCodeViaBypass(userId)
+	if err != nil {
+		return
+	}
+	// Hit login code endpoint for authToken.
+	authToken, _, err := loginCode(userId, actualCode)
+	if err != nil {
+		return
+	}
+	// Logout.
+	err = logout(authToken, userId)
+	if err != nil {
+		return
+	}
+
+	// Create exim.
+
+	// Reverse order of above.
+}
+
 func runEndToEndLocal() {
 	// The API server will be started in a subprocess below. If it is already
 	// running in another process, abort this test.
@@ -118,7 +151,7 @@ func runEndToEndLocal() {
 	}
 
 	// Proceed with testing endpoints.
-	signup(generateRandomEmailAddress())
+	runEndToEndSequence()
 	shutdown()
 
 	// Wait for previously started command to exit.

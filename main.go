@@ -84,7 +84,7 @@ var menu = [...]menuItems{
 			},
 			{
 				desc: "Logout",
-				cmd:  logout,
+				cmd:  wrappedLogout,
 			},
 			{
 				desc: "Create Exim",

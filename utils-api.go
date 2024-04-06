@@ -129,7 +129,7 @@ func wrappedLogin() {
 
 // Get a loginCode for a given userId by posting a request to a restricted
 // endpoint called bypass-email. Normally a code is emailed to users.
-func getLoginCode(userId string) (int, error) {
+func getLoginCodeViaBypass(userId string) (int, error) {
 	type responseBody struct {
 		LoginCode     int       `json:"loginCode"`
 		LoginAttempts int       `json:"loginAttempts"`
@@ -137,7 +137,7 @@ func getLoginCode(userId string) (int, error) {
 		Error         string    `json:"error"`
 	}
 	var responseBodyInst responseBody
-	var url = fmt.Sprintf("http://localhost:8000/api/admin/bypass-email/%s", testUserId)
+	var url = fmt.Sprintf("http://localhost:8000/api/admin/bypass-email/%s", userId)
 
 	// Create a new request using http.
 	req, err := http.NewRequest("GET", url, nil)
@@ -210,7 +210,7 @@ func wrappedLoginCode() {
 	// No hard-coded testLoginCode. Get code from the server.
 	if testLoginCode == 0 {
 		var err error
-		testLoginCode, err = getLoginCode(testUserId)
+		testLoginCode, err = getLoginCodeViaBypass(testUserId)
 		if err != nil {
 			return
 		}
@@ -228,13 +228,13 @@ func wrappedLoginCode() {
 	fmt.Printf("[admin] userId: %s, token: %s [%s]\n", testUserId, testToken, cts())
 }
 
-func logout() {
+func logout(authToken string, userId string) error {
 	type responseBody struct {
 		Error string `json:"error"`
 	}
 	var responseBodyInst responseBody
 	url := "http://localhost:8000/api/user/logout/"
-	jsonData := []byte(fmt.Sprintf(`{"userId":"%s"}`, testUserId))
+	jsonData := []byte(fmt.Sprintf(`{"userId":"%s"}`, userId))
 
 	// Create a new request using http.
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
@@ -244,7 +244,7 @@ func logout() {
 	}
 
 	// Add authorization header to the request.
-	req.Header.Add("Authorization", "Bearer "+testToken)
+	req.Header.Add("Authorization", "Bearer "+authToken)
 	// Set Content-Type header to application/json.
 	req.Header.Set("Content-Type", "application/json")
 
@@ -263,8 +263,22 @@ func logout() {
 	if resp.StatusCode != http.StatusNoContent {
 		unmarshalOrExit(resp.Body, &responseBodyInst)
 		fmt.Printf("[admin] server returned error: %s [%s]\n", responseBodyInst.Error, cts())
+		return fmt.Errorf(responseBodyInst.Error)
 	}
 
+	return nil
+}
+
+func wrappedLogout() {
+	if testToken == "" {
+		fmt.Printf("[err][admin] no hard-coded test token - login first [%s]\n", cts())
+		return
+	}
+	err := logout(testToken, testUserId)
+	if err != nil {
+		return
+	}
+	fmt.Printf("[admin] test user successfully logged out [%s]\n", cts())
 }
 
 func createExim() {
