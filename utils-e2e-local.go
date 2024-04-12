@@ -83,7 +83,10 @@ func runEndToEndSequence() {
 	}
 
 	// Create exim.
-	createExim(authToken)
+	eximId := createExim(authToken)
+
+	// Get exim.
+	getEximDetails(eximId)
 
 	// Logout.
 	err = logout(authToken, userId)

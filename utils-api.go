@@ -181,16 +181,16 @@ func loginCode(userId string, code int) (string, int, error) {
 	var url = "http://localhost:8000/api/user/login-code/"
 	var jsonData = []byte(fmt.Sprintf(`{"userId":"%s","code":%d}`, userId, code))
 	// Send POST request using the default http client.
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	res, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
 
-	unmarshalOrExit(resp.Body, &resBody)
+	unmarshalOrExit(res.Body, &resBody)
 
 	// Check if the server returned an error message.
 	if resBody.Error != "" {
@@ -227,59 +227,6 @@ func wrappedLoginCode() {
 	}
 
 	fmt.Printf("[admin] userId: %s, token: %s [%s]\n", testUserId, testToken, cts())
-}
-
-func logout(authToken string, userId string) error {
-	type ResponseBody struct {
-		Error string `json:"error"`
-	}
-	var resBody ResponseBody
-	url := "http://localhost:8000/api/user/logout/"
-	jsonData := []byte(fmt.Sprintf(`{"userId":"%s"}`, userId))
-
-	// Create a new request using http.
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Printf("[err][admin] creating new request: %v [%s]\n", err, cts())
-		os.Exit(1)
-	}
-
-	// Add authorization header to the request.
-	req.Header.Add("Authorization", "Bearer "+authToken)
-	// Set Content-Type header to application/json.
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send request.
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
-		os.Exit(1)
-	}
-	defer res.Body.Close()
-
-	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
-
-	// A 204 status code (no content) is expected. If it's anything else,
-	// proceed with unmarshaling the response body to get the error.
-	if res.StatusCode != http.StatusNoContent {
-		unmarshalOrExit(res.Body, &resBody)
-		fmt.Printf("[admin] server returned error: %s [%s]\n", resBody.Error, cts())
-		return fmt.Errorf(resBody.Error)
-	}
-
-	return nil
-}
-
-func wrappedLogout() {
-	if testToken == "" {
-		fmt.Printf("[err][admin] no hard-coded test token - login first [%s]\n", cts())
-		return
-	}
-	err := logout(testToken, testUserId)
-	if err != nil {
-		return
-	}
-	fmt.Printf("[admin] test user successfully logged out [%s]\n", cts())
 }
 
 func createExim(authToken string) string {
@@ -356,4 +303,102 @@ func wrappedCreateExim() {
 		return
 	}
 	testEximId = createExim(testToken)
+}
+
+func getEximDetails(eximId string) {
+	type ResponseBody struct {
+		EximId     string `json:"eximId"`
+		Author     string `json:"author"`
+		IsApproved bool   `json:"isApproved"`
+		Target     string `json:"target"`
+		Title      string `json:"title"`
+		Summary    string `json:"summary"`
+		Paragraph1 string `json:"paragraph1"`
+		Paragraph2 string `json:"paragraph2"`
+		Paragraph3 string `json:"paragraph3"`
+		Link       string `json:"link"`
+		Error      string `json:"error"`
+	}
+	var resBody ResponseBody
+	var url = fmt.Sprintf("http://localhost:8000/api/exim/%s", eximId)
+
+	// Send GET request using the default http client.
+	res, err := http.Get(url)
+	if err != nil {
+		fmt.Printf("[err][admin] completing get request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+	defer res.Body.Close()
+
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
+
+	unmarshalOrExit(res.Body, &resBody)
+
+	// Check if the server returned an error message.
+	if resBody.Error != "" {
+		fmt.Printf("[admin] api server returned error: %s [%s]\n", resBody.Error, cts())
+	} else {
+		fmt.Printf("[admin] got exim details (title as follows): %v [%s]\n", resBody.Title, cts())
+	}
+}
+
+func wrappedGetEximDetails() {
+	if testEximId == "" {
+		fmt.Printf("[err][admin] no hard-coded test eximId - create an exim first [%s]\n", cts())
+		return
+	}
+	getEximDetails(testEximId)
+}
+
+func logout(authToken string, userId string) error {
+	type ResponseBody struct {
+		Error string `json:"error"`
+	}
+	var resBody ResponseBody
+	url := "http://localhost:8000/api/user/logout/"
+	jsonData := []byte(fmt.Sprintf(`{"userId":"%s"}`, userId))
+
+	// Create a new request using http.
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Printf("[err][admin] creating new request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+
+	// Add authorization header to the request.
+	req.Header.Add("Authorization", "Bearer "+authToken)
+	// Set Content-Type header to application/json.
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request.
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+	defer res.Body.Close()
+
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
+
+	// A 204 status code (no content) is expected. If it's anything else,
+	// proceed with unmarshaling the response body to get the error.
+	if res.StatusCode != http.StatusNoContent {
+		unmarshalOrExit(res.Body, &resBody)
+		fmt.Printf("[admin] server returned error: %s [%s]\n", resBody.Error, cts())
+		return fmt.Errorf(resBody.Error)
+	}
+
+	return nil
+}
+
+func wrappedLogout() {
+	if testToken == "" {
+		fmt.Printf("[err][admin] no hard-coded test token - login first [%s]\n", cts())
+		return
+	}
+	err := logout(testToken, testUserId)
+	if err != nil {
+		return
+	}
+	fmt.Printf("[admin] test user successfully logged out [%s]\n", cts())
 }

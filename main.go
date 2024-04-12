@@ -87,6 +87,10 @@ var menu = [...]menuItems{
 				cmd:  wrappedCreateExim,
 			},
 			{
+				desc: "Get Exim Details",
+				cmd:  wrappedGetEximDetails,
+			},
+			{
 				desc: "Logout",
 				cmd:  wrappedLogout,
 			},
