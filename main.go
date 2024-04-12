@@ -83,12 +83,12 @@ var menu = [...]menuItems{
 				cmd:  wrappedLoginCode,
 			},
 			{
-				desc: "Logout",
-				cmd:  wrappedLogout,
+				desc: "Create Exim",
+				cmd:  wrappedCreateExim,
 			},
 			{
-				desc: "Create Exim",
-				cmd:  createExim,
+				desc: "Logout",
+				cmd:  wrappedLogout,
 			},
 		},
 	},

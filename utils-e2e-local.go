@@ -81,15 +81,15 @@ func runEndToEndSequence() {
 	if err != nil {
 		return
 	}
+
+	// Create exim.
+	createExim(authToken)
+
 	// Logout.
 	err = logout(authToken, userId)
 	if err != nil {
 		return
 	}
-
-	// Create exim.
-
-	// Reverse order of above.
 }
 
 func runEndToEndLocal() {

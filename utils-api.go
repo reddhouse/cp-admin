@@ -19,6 +19,7 @@ var words = strings.Fields(str)
 var testEmail = ""
 var testUserId = ""
 var testToken = ""
+var testEximId = ""
 
 // Manually test with hard-coded value. If set to 0, the login code will be
 // retrieved from the api server (admin email bypass).
@@ -44,33 +45,33 @@ func generatePlaceholderText(numWords int) string {
 }
 
 func signup(email string) (string, error) {
-	type responseBody struct {
+	type ResponseBody struct {
 		UserId string `json:"userId"`
 		Error  string `json:"error"`
 	}
-	var responseBodyInst responseBody
+	var resBody ResponseBody
 	var url = "http://localhost:8000/api/user/signup/"
 	var jsonData = []byte(`{"email":"` + email + `"}`)
 
 	// Send POST request using the default http client.
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	res, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
 
-	unmarshalOrExit(resp.Body, &responseBodyInst)
+	unmarshalOrExit(res.Body, &resBody)
 
 	// Check if the server returned an error message.
-	if responseBodyInst.Error != "" {
-		fmt.Printf("[admin] api server returned error: %s [%s]\n", responseBodyInst.Error, cts())
-		return responseBodyInst.UserId, fmt.Errorf(responseBodyInst.Error)
+	if resBody.Error != "" {
+		fmt.Printf("[admin] api server returned error: %s [%s]\n", resBody.Error, cts())
+		return resBody.UserId, fmt.Errorf(resBody.Error)
 	}
 
-	return responseBodyInst.UserId, nil
+	return resBody.UserId, nil
 }
 
 func wrappedSignup() {
@@ -86,32 +87,32 @@ func wrappedSignup() {
 }
 
 func login(email string) (string, error) {
-	type responseBody struct {
+	type ResponseBody struct {
 		UserId string `json:"userId"`
 		Error  string `json:"error"`
 	}
-	var responseBodyInst responseBody
+	var resBody ResponseBody
 	var url = "http://localhost:8000/api/user/login/"
 	var jsonData = []byte(fmt.Sprintf(`{"email":"%s"}`, email))
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	res, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
 
-	unmarshalOrExit(resp.Body, &responseBodyInst)
+	unmarshalOrExit(res.Body, &resBody)
 
 	// Check if the server returned an error message.
-	if responseBodyInst.Error != "" {
-		fmt.Printf("[admin] api server returned error: %s [%s]\n", responseBodyInst.Error, cts())
-		return responseBodyInst.UserId, fmt.Errorf(responseBodyInst.Error)
+	if resBody.Error != "" {
+		fmt.Printf("[admin] api server returned error: %s [%s]\n", resBody.Error, cts())
+		return resBody.UserId, fmt.Errorf(resBody.Error)
 	}
 
-	return responseBodyInst.UserId, nil
+	return resBody.UserId, nil
 }
 
 func wrappedLogin() {
@@ -130,13 +131,13 @@ func wrappedLogin() {
 // Get a loginCode for a given userId by posting a request to a restricted
 // endpoint called bypass-email. Normally a code is emailed to users.
 func getLoginCodeViaBypass(userId string) (int, error) {
-	type responseBody struct {
+	type ResponseBody struct {
 		LoginCode     int       `json:"loginCode"`
 		LoginAttempts int       `json:"loginAttempts"`
 		LogoutTs      time.Time `json:"logoutTs"`
 		Error         string    `json:"error"`
 	}
-	var responseBodyInst responseBody
+	var resBody ResponseBody
 	var url = fmt.Sprintf("http://localhost:8000/api/admin/bypass-email/%s", userId)
 
 	// Create a new request using http.
@@ -150,33 +151,33 @@ func getLoginCodeViaBypass(userId string) (int, error) {
 	req.Header.Set("Admin-Authorization", adminAuthToken)
 
 	// Send the request.
-	resp, err := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
 
-	unmarshalOrExit(resp.Body, &responseBodyInst)
+	unmarshalOrExit(res.Body, &resBody)
 
 	// Check if the server returned an error message.
-	if responseBodyInst.Error != "" {
-		fmt.Printf("[admin] api server returned error: %s [%s]\n", responseBodyInst.Error, cts())
-		return responseBodyInst.LoginCode, fmt.Errorf(responseBodyInst.Error)
+	if resBody.Error != "" {
+		fmt.Printf("[admin] api server returned error: %s [%s]\n", resBody.Error, cts())
+		return resBody.LoginCode, fmt.Errorf(resBody.Error)
 	}
 
-	return responseBodyInst.LoginCode, nil
+	return resBody.LoginCode, nil
 }
 
 func loginCode(userId string, code int) (string, int, error) {
-	type responseBody struct {
+	type ResponseBody struct {
 		Token             string `json:"token"`
 		RemainingAttempts int    `json:"remainingAttempts"`
 		Error             string `json:"error"`
 	}
-	var responseBodyInst responseBody
+	var resBody ResponseBody
 	var url = "http://localhost:8000/api/user/login-code/"
 	var jsonData = []byte(fmt.Sprintf(`{"userId":"%s","code":%d}`, userId, code))
 	// Send POST request using the default http client.
@@ -189,15 +190,15 @@ func loginCode(userId string, code int) (string, int, error) {
 
 	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
 
-	unmarshalOrExit(resp.Body, &responseBodyInst)
+	unmarshalOrExit(resp.Body, &resBody)
 
 	// Check if the server returned an error message.
-	if responseBodyInst.Error != "" {
-		fmt.Printf("[admin] api server returned error: %s [%s]\n", responseBodyInst.Error, cts())
-		return "", responseBodyInst.RemainingAttempts, fmt.Errorf(responseBodyInst.Error)
+	if resBody.Error != "" {
+		fmt.Printf("[admin] api server returned error: %s [%s]\n", resBody.Error, cts())
+		return "", resBody.RemainingAttempts, fmt.Errorf(resBody.Error)
 	}
 
-	return responseBodyInst.Token, responseBodyInst.RemainingAttempts, nil
+	return resBody.Token, resBody.RemainingAttempts, nil
 }
 
 func wrappedLoginCode() {
@@ -229,10 +230,10 @@ func wrappedLoginCode() {
 }
 
 func logout(authToken string, userId string) error {
-	type responseBody struct {
+	type ResponseBody struct {
 		Error string `json:"error"`
 	}
-	var responseBodyInst responseBody
+	var resBody ResponseBody
 	url := "http://localhost:8000/api/user/logout/"
 	jsonData := []byte(fmt.Sprintf(`{"userId":"%s"}`, userId))
 
@@ -249,21 +250,21 @@ func logout(authToken string, userId string) error {
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send request.
-	resp, err := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
 
 	// A 204 status code (no content) is expected. If it's anything else,
 	// proceed with unmarshaling the response body to get the error.
-	if resp.StatusCode != http.StatusNoContent {
-		unmarshalOrExit(resp.Body, &responseBodyInst)
-		fmt.Printf("[admin] server returned error: %s [%s]\n", responseBodyInst.Error, cts())
-		return fmt.Errorf(responseBodyInst.Error)
+	if res.StatusCode != http.StatusNoContent {
+		unmarshalOrExit(res.Body, &resBody)
+		fmt.Printf("[admin] server returned error: %s [%s]\n", resBody.Error, cts())
+		return fmt.Errorf(resBody.Error)
 	}
 
 	return nil
@@ -281,8 +282,8 @@ func wrappedLogout() {
 	fmt.Printf("[admin] test user successfully logged out [%s]\n", cts())
 }
 
-func createExim() {
-	type requestBody struct {
+func createExim(authToken string) string {
+	type RequestBody struct {
 		Target     string `json:"target"`
 		Title      string `json:"title"`
 		Summary    string `json:"summary"`
@@ -291,25 +292,25 @@ func createExim() {
 		Paragraph3 string `json:"paragraph3"`
 		Link       string `json:"link"`
 	}
-	type responseBody struct {
+	type ResponseBody struct {
 		EximId string `json:"eximId"`
 		Error  string `json:"error"`
 	}
-	var requestBodyInst requestBody
-	var responseBodyInst responseBody
+	var reqBody RequestBody
+	var resBody ResponseBody
 	var url = "http://localhost:8000/api/exim/create/"
 
 	// Fill Exim with random, placeholder text.
-	requestBodyInst.Target = "FEDERAL"
-	requestBodyInst.Title = generatePlaceholderText(5)
-	requestBodyInst.Summary = generatePlaceholderText(20)
-	requestBodyInst.Paragraph1 = generatePlaceholderText(40)
-	requestBodyInst.Paragraph2 = generatePlaceholderText(40)
-	requestBodyInst.Paragraph3 = generatePlaceholderText(40)
-	requestBodyInst.Link = fmt.Sprintf("https://%s.com", generatePlaceholderText(3))
+	reqBody.Target = "FEDERAL"
+	reqBody.Title = generatePlaceholderText(5)
+	reqBody.Summary = generatePlaceholderText(20)
+	reqBody.Paragraph1 = generatePlaceholderText(40)
+	reqBody.Paragraph2 = generatePlaceholderText(40)
+	reqBody.Paragraph3 = generatePlaceholderText(40)
+	reqBody.Link = fmt.Sprintf("https://%s.com", generatePlaceholderText(3))
 
 	// Marshal the request body to JSON.
-	jsonData, err := json.Marshal(requestBodyInst)
+	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
 		fmt.Printf("[err][admin] marshaling request body: %v [%s]\n", err, cts())
 		os.Exit(1)
@@ -323,26 +324,36 @@ func createExim() {
 	}
 
 	// Add authorization header to the request.
-	req.Header.Add("Authorization", "Bearer "+testToken)
+	req.Header.Add("Authorization", "Bearer "+authToken)
 	// Set Content-Type header to application/json.
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send request.
-	resp, err := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("[err][admin] posting request: %v [%s]\n", err, cts())
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	fmt.Printf("[admin] response status: %s [%s]\n", resp.Status, cts())
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
 
-	unmarshalOrExit(resp.Body, &responseBodyInst)
+	unmarshalOrExit(res.Body, &resBody)
 
 	// Check if the server returned an error message.
-	if responseBodyInst.Error != "" {
-		fmt.Printf("[admin] api server returned error: %s [%s]\n", responseBodyInst.Error, cts())
+	if resBody.Error != "" {
+		fmt.Printf("[admin] api server returned error: %s [%s]\n", resBody.Error, cts())
 	} else {
-		fmt.Printf("[admin] ulid of new exim: %s [%s]\n", responseBodyInst.EximId, cts())
+		fmt.Printf("[admin] ulid of new exim: %s [%s]\n", resBody.EximId, cts())
 	}
+
+	return resBody.EximId
+}
+
+func wrappedCreateExim() {
+	if testToken == "" {
+		fmt.Printf("[err][admin] no hard-coded test token - login first [%s]\n", cts())
+		return
+	}
+	testEximId = createExim(testToken)
 }
