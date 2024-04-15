@@ -91,6 +91,10 @@ var menu = [...]menuItems{
 				cmd:  wrappedGetEximDetails,
 			},
 			{
+				desc: "Get (All) Exims",
+				cmd:  getExims,
+			},
+			{
 				desc: "Logout",
 				cmd:  wrappedLogout,
 			},

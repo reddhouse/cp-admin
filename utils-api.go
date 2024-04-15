@@ -350,6 +350,50 @@ func wrappedGetEximDetails() {
 	getEximDetails(testEximId)
 }
 
+func getExims() {
+	type Exim struct {
+		EximId     string `json:"eximId"`
+		Author     string `json:"author"`
+		IsApproved bool   `json:"isApproved"`
+		Target     string `json:"target"`
+		Title      string `json:"title"`
+		Summary    string `json:"summary"`
+		Paragraph1 string `json:"paragraph1"`
+		Paragraph2 string `json:"paragraph2"`
+		Paragraph3 string `json:"paragraph3"`
+		Link       string `json:"link"`
+	}
+	type ResponseBody struct {
+		Exims []Exim `json:"exims"`
+		Error string `json:"error"`
+	}
+
+	var resBody ResponseBody
+	var url = "http://localhost:8000/api/exims"
+
+	// Send GET request using the default http client.
+	res, err := http.Get(url)
+	if err != nil {
+		fmt.Printf("[err][admin] completing get request: %v [%s]\n", err, cts())
+		os.Exit(1)
+	}
+	defer res.Body.Close()
+
+	fmt.Printf("[admin] response status: %s [%s]\n", res.Status, cts())
+
+	unmarshalOrExit(res.Body, &resBody)
+
+	// Check if the server returned an error message.
+	if resBody.Error != "" {
+		fmt.Printf("[admin] api server returned error: %s [%s]\n", resBody.Error, cts())
+	} else {
+		// Range over resBody.Exims and print the title of each exim.
+		for _, exim := range resBody.Exims {
+			fmt.Printf("[admin] exim title: %s [%s]\n", exim.Title, cts())
+		}
+	}
+}
+
 func logout(authToken string, userId string) error {
 	type ResponseBody struct {
 		Error string `json:"error"`
