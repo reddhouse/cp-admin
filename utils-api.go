@@ -44,6 +44,16 @@ func generatePlaceholderText(numWords int) string {
 	return result
 }
 
+func generatePlaceholderLink(numWords int) string {
+	source := rand.NewSource(time.Now().UnixNano())
+	rng := rand.New(source)
+	result := ""
+	for i := 0; i < numWords; i++ {
+		result += words[rng.Intn(len(words))]
+	}
+	return result
+}
+
 func signup(email string) (string, error) {
 	type ResponseBody struct {
 		UserId string `json:"userId"`
@@ -254,7 +264,7 @@ func createExim(authToken string) string {
 	reqBody.Paragraph1 = generatePlaceholderText(40)
 	reqBody.Paragraph2 = generatePlaceholderText(40)
 	reqBody.Paragraph3 = generatePlaceholderText(40)
-	reqBody.Link = fmt.Sprintf("https://%s.com", generatePlaceholderText(3))
+	reqBody.Link = fmt.Sprintf("https://%s.com", generatePlaceholderLink(3))
 
 	// Marshal the request body to JSON.
 	jsonData, err := json.Marshal(reqBody)
